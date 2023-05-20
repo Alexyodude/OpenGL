@@ -5,84 +5,26 @@
 #include <string>
 #include <sstream>
 
+#include "Log.h"
 #include "Renderer.h"
 
-struct ShaderProgramSource
-{
-	std::string VertexSource;
-	std::string FragmentSource;
-};
+#include "Shader.h"
+#include "VertexBufferLayout.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "Texture.h"
 
-static ShaderProgramSource ParseShader(const std::string& filepath) {
-    std::ifstream stream(filepath);
+//#include "Player.h"
 
-    enum class ShaderType
-    {
-		NONE = -1, VERTEX = 0, FRAGMENT = 1
-	};
+void Cursor_Pos_Callback(GLFWwindow* window, double xpos, double ypos);
+void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    std::string line;
-    std::stringstream ss[2];
-    ShaderType mode = ShaderType::NONE;
-    while (getline(stream, line)){
-		if (line.find("#shader") != std::string::npos) {
-			if (line.find("vertex") != std::string::npos) {
-				// set mode to vertex
-                mode = ShaderType::VERTEX;
-			}
-			else if (line.find("fragment") != std::string::npos) {
-				// set mode to fragment
-                mode = ShaderType::FRAGMENT;
-			}
-		}
-		else {
-			ss[(int)mode] << line << std::endl;
-		}
-	}
+int Window_Width = 500;
+int Window_Height = 500;
+double xpos, ypos;
 
-    return { ss[0].str(), ss[1].str() };
-}
-
-static unsigned int CompileShader(unsigned int type, const std::string& source)
-{
-	unsigned int id = glCreateShader(type);
-	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, nullptr);
-	glCompileShader(id);
-
-	int result;
-	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-    if (result == GL_FALSE)
-    {
-		int length;
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-		char* message = (char*)alloca(length * sizeof(char));
-		glGetShaderInfoLog(id, length, &length, message);
-		std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-		std::cout << message << std::endl;
-		glDeleteShader(id);
-		return 0;
-	}
-
-	return id;
-}
-
-static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
-{
-	unsigned int program = glCreateProgram();
-	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
-	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glValidateProgram(program);
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-	return program;
-}
+//Player player;
 
 int main(void)
 {
@@ -93,7 +35,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(Window_Width, Window_Height, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -109,62 +51,96 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    float vertex[] =
+
+    glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetKeyCallback(window, Key_Callback);
     {
-		-1.0f, -0.0f, //0
-		 0.0f, -1.0f, //1
-		 1.0f,  0.0f, //2
-        -0.0f,  1.0f  //3
-	};
+        float vertex[] =
+        {
+            -1.0f,  0.0f, 0.0f, 0.0f, //0  
+             0.0f, -1.0f, 1.0f, 0.0f, //1
+             1.0f,  0.0f, 1.0f, 1.0f, //2
+            -0.0f,  1.0f, 0.0f, 1.0f, //3
+        };
 
-    unsigned int index[] =
-    {
-		0,1,2,
-        2,3,0
-	};
+        unsigned int index[] =
+        {
+            0,1,2,
+            2,3,0
+        };
 
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), &vertex, GL_STATIC_DRAW);
- 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
+        GLCall(glEnable(GL_BLEND));
+        GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-    unsigned int ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), &index, GL_STATIC_DRAW);
+        VertexArray va;
+        VertexBuffer vb(vertex, 4 * 4 * sizeof(float));
 
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-    glUseProgram(shader);
-    //std::cout << "VERTEX" << std::endl;
-    //std::cout << source.VertexSource << std::endl;
-    //std::cout << "FRAGMENT" << std::endl;
-    //std::cout << source.FragmentSource << std::endl;
+        VertexBufferLayout layout;
+        layout.Push<float>(2);
+        layout.Push<float>(2);
+        va.AddBuffer(vb, layout);
 
+        IndexBuffer ib(index, 6);
 
+        Shader shader("res/shaders/Basic.shader");
+        shader.Bind();
+        shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f);
 
+        Texture texture("res/textures/test.jpg");
+        texture.Bind();
+        shader.SetUniform1i("u_Texture", 0);
 
+        va.Unbind();
+        vb.Unbind();
+        ib.Unbind();
+        shader.Unbind();
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        Renderer renderer;
 
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+        /* Loop until the user closes the window */
+        while (!glfwWindowShouldClose(window))
+        {
+            /* Render here */
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+            shader.Bind();
+            shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f);
 
-        /* Poll for and process events */
-        glfwPollEvents();
+            vertex[0] = xpos;
+            vertex[1] = ypos;
+            //std::cout << vertex[0] << std::endl;
+
+            va.Bind();
+            ib.Bind();
+            vb.SetData(vertex, 4 * 4 * sizeof(float));
+
+            renderer.Draw(va, ib, shader);
+            //GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+   
+            /* Swap front and back buffers */
+            glfwSwapBuffers(window);
+
+            /* Poll for and process events */
+            glfwPollEvents();
+        }
     }
-
-    glDeleteProgram(shader);
-
     glfwTerminate();
     return 0;
+}
+
+static void Cursor_Pos_Callback(GLFWwindow* window, double xpos1, double ypos1)
+{
+    glfwGetFramebufferSize(window, &Window_Width, &Window_Height);
+    xpos = 2*(xpos1/(Window_Width)-0.5f);
+    ypos = -2*(ypos1/(Window_Height)-0.5f);
+	std::cout << xpos << ", " << ypos << std::endl;
+}
+
+void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_W) {
+        std::cout << key << std::endl;
+        //player.Input();
+    }
 }
