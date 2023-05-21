@@ -22,12 +22,14 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+//#include "tests/TestClearColor.h"
+
 //#include "Player.h"
 
 void Cursor_Pos_Callback(GLFWwindow* window, double xpos, double ypos);
 void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-int Window_Width = 500;
+int Window_Width = 1000;
 int Window_Height = 500;
 double xpos, ypos;
 
@@ -59,16 +61,16 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
+    //glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwSetKeyCallback(window, Key_Callback);
+    //glfwSetKeyCallback(window, Key_Callback);
     {
         float vertex[] =
         {
-            -1.0f,  0.0f, 0.0f, 0.0f, //0  
-             0.0f, -1.0f, 1.0f, 0.0f, //1
-             1.0f,  0.0f, 1.0f, 1.0f, //2
-            -0.0f,  1.0f, 0.0f, 1.0f, //3
+           -50.0f,   0.0f, 0.0f, 0.0f, //0  
+             0.0f, -50.0f, 1.0f, 0.0f, //1
+            50.0f,   0.0f, 1.0f, 1.0f, //2
+             0.0f,  50.0f, 0.0f, 1.0f, //3
         };
 
         unsigned int index[] =
@@ -89,6 +91,9 @@ int main(void)
         va.AddBuffer(vb, layout);
 
         IndexBuffer ib(index, 6);
+
+        glm::mat4 proj = glm::ortho(0.0f, (float)Window_Width, 0.0f, (float)Window_Height, -100.0f, 100.0f);
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
@@ -112,6 +117,9 @@ int main(void)
         ImGui_ImplOpenGL3_Init("#version 330");
         ImGui::StyleColorsDark();
 
+        glm::vec3 translationA(200, 200, 0);
+        glm::vec3 translationB(200, 100, 0);
+
         bool show_demo_window = true;
         bool show_another_window = false;
         ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -126,37 +134,52 @@ int main(void)
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            shader.Bind();
-            shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f);
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                
+                renderer.Draw(va, ib, shader);
+            }
 
-            vertex[0] = xpos;
-            vertex[1] = ypos;
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                
+                renderer.Draw(va, ib, shader);
+            }
+
+            //vertex[0] = xpos;
+            //vertex[1] = ypos;
             //std::cout << vertex[0] << std::endl;
 
-            va.Bind();
-            ib.Bind();
-            vb.SetData(vertex, 4 * 4 * sizeof(float));
+            //va.Bind();
+            //ib.Bind();
+            //vb.SetData(vertex, 4 * 4 * sizeof(float));
 
-            renderer.Draw(va, ib, shader);
-            //GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-            
             {
-                static float f = 0.0f;
-                static int counter = 0;
+                //static float f = 0.0f;
+                //static int counter = 0;
 
                 ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-                ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-                ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-                ImGui::Checkbox("Another Window", &show_another_window);
+                ImGui::SliderFloat3("TranslationA", &translationA.x, 0.0f, (float)Window_Width);
+                ImGui::SliderFloat3("TranslationB", &translationB.x, 0.0f, (float)Window_Width);
 
-                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-                ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+                //ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+                //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+                //ImGui::Checkbox("Another Window", &show_another_window);
 
-                if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                    counter++;
-                ImGui::SameLine();
-                ImGui::Text("counter = %d", counter);
+                //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+                //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+                //if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                //    counter++;
+                //ImGui::SameLine();
+                //ImGui::Text("counter = %d", counter);
 
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
                 ImGui::End();
