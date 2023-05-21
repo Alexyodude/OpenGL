@@ -15,6 +15,13 @@
 #include "IndexBuffer.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 //#include "Player.h"
 
 void Cursor_Pos_Callback(GLFWwindow* window, double xpos, double ypos);
@@ -48,9 +55,9 @@ int main(void)
     if (glewInit() != GLEW_OK) {
         std::cout << "Error!" << std::endl;
     }
+    glfwSwapInterval(1);
 
     std::cout << glGetString(GL_VERSION) << std::endl;
-
 
     glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -98,11 +105,26 @@ int main(void)
 
         Renderer renderer;
 
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        ImGui_ImplOpenGL3_Init("#version 330");
+        ImGui::StyleColorsDark();
+
+        bool show_demo_window = true;
+        bool show_another_window = false;
+        ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
             /* Render here */
-            glClear(GL_COLOR_BUFFER_BIT);
+            renderer.Clear();
+
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
             shader.Bind();
             shader.SetUniform4f("u_Color", 1.0f, 1.0f, 1.0f, 1.0f);
@@ -117,7 +139,32 @@ int main(void)
 
             renderer.Draw(va, ib, shader);
             //GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-   
+            
+            {
+                static float f = 0.0f;
+                static int counter = 0;
+
+                ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+                ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+                ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+                ImGui::Checkbox("Another Window", &show_another_window);
+
+                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+                ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+                if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                    counter++;
+                ImGui::SameLine();
+                ImGui::Text("counter = %d", counter);
+
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+                ImGui::End();
+            }
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
@@ -125,6 +172,11 @@ int main(void)
             glfwPollEvents();
         }
     }
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 }
@@ -132,8 +184,8 @@ int main(void)
 static void Cursor_Pos_Callback(GLFWwindow* window, double xpos1, double ypos1)
 {
     glfwGetFramebufferSize(window, &Window_Width, &Window_Height);
-    xpos = 2*(xpos1/(Window_Width)-0.5f);
-    ypos = -2*(ypos1/(Window_Height)-0.5f);
+    xpos =  2 * (xpos1/(Window_Width) - 0.5f);
+    ypos = -2 * (ypos1/(Window_Height) - 0.5f);
 	std::cout << xpos << ", " << ypos << std::endl;
 }
 
