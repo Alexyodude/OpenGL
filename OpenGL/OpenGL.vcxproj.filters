@@ -72,6 +72,12 @@
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tests\Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests\TestTexture2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\tests\TestClearColor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1422,10 +1428,13 @@
     <ClInclude Include="Dependices\GLFW\include\GLFW\glfw3native.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\tests\Test.h">
+    <ClInclude Include="src\tests\TestTexture2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tests\TestClearColor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tests\Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
