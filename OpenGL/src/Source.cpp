@@ -1,3 +1,7 @@
+//#define ImGui_DEBUG_TestTexture
+#define ImGui_DEBUG
+#define KEY_DEBUG
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -25,17 +29,9 @@
 #include "tests/TestClearColor.h"
 #include "tests/TestTexture2D.h"
 
+#include "Layer.h"
 
-//#include "Player.h"
-
-void Cursor_Pos_Callback(GLFWwindow* window, double xpos, double ypos);
-void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-int Window_Width = 1000;
-int Window_Height = 500;
-double xpos, ypos;
-
-//Player player;
+#include "EventListener.h"
 
 int main(void)
 {
@@ -46,7 +42,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(Window_Width, Window_Height, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(Window_Width, Window_Height, "Hello Wurld", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -65,87 +61,93 @@ int main(void)
 
     //glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    //glfwSetKeyCallback(window, Key_Callback);
+
+    glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
+    glfwSetKeyCallback(window, Key_Callback);
+    glfwSetWindowSizeCallback(window, Window_Size_Callback);
+
     {
         GLCall(glEnable(GL_BLEND));
 		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-
-        Renderer renderer;
-
-        ImGui::CreateContext();
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
-        ImGui_ImplOpenGL3_Init("#version 330");
-        ImGui::StyleColorsDark();
-
-        test::Test* currentTest = nullptr;
-        test::TestMenu* testMenu = new test::TestMenu(currentTest);
-        currentTest = testMenu;
-
-        testMenu->RegisterTest<test::TestClearColor>("Clear Color");
-        testMenu->RegisterTest<test::TestTexture2D>("Texture 2D");
         
+        //Renderer renderer;
+
+        #ifdef ImGui_DEBUG
+            ImGui::CreateContext();
+            ImGui_ImplGlfw_InitForOpenGL(window, true);
+            ImGui_ImplOpenGL3_Init("#version 330");
+            ImGui::StyleColorsDark();
+        #endif
+        #ifdef ImGui_DEBUG_TestTexture
+            test::Test* currentTest = nullptr;
+            test::TestMenu* testMenu = new test::TestMenu(currentTest);
+            currentTest = testMenu;
+
+            testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+            testMenu->RegisterTest<test::TestTexture2D>("Texture 2D");
+        #endif
+        std::unique_ptr <Texture> T1 = std::make_unique<Texture>("res/textures/test.jpg");
+        std::unique_ptr <Texture> T2 = std::make_unique<Texture>("res/textures/earth.jpg");
+        std::unique_ptr <Layer> layer = std::make_unique<Layer>();
+        T1->Bind(1);
+        T2->Bind(2);
+
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
-        {
-            GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-            /* Render here */
-            renderer.Clear();
+        {  
+            #ifdef ImGui_DEBUG
+                ImGui_ImplOpenGL3_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+            #endif
+           // std::unique_ptr<SandBox> sandBox = std::make_unique<SandBox>(&renderer);
+            //sandBox->SetRenderer(&renderer);
+            //sandBox->AddQuad(10+sandBox->index1.size(), 10, 2);
+            layer->OnRender();
+            layer->OnEvent(KEY);
 
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            if (currentTest) 
-            {
-                currentTest->OnUpdate(0.0f);
-                currentTest->OnRender();
+            #ifdef ImGui_DEBUG_TestTexture
+                if (currentTest) 
+                {
+                    currentTest->OnUpdate(0.0f); //Updates the test
+                    currentTest->OnRender(); //Renders the test
 
-                ImGui::Begin("Test");
-                if (currentTest != testMenu)
-                    if (ImGui::Button("<-"))
-                    {
-                        delete currentTest;
-                        currentTest = testMenu;
-                    }
+                    ImGui::Begin("Test"); //Begins the test ui window
+                    if (currentTest != testMenu) //If the current test is not the test menu
+                        if (ImGui::Button("<-")) //If the button is pressed
+                        {
+                            delete currentTest; //Deletes the current test
+                            currentTest = testMenu; //Sets the current test to the test menu
+                        }
 
-                currentTest->OnImGuiRender();
+                    currentTest->OnImGuiRender(); //Renders the test ui slider, button, etc.
 
-                ImGui::End();
-            }
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+                    ImGui::End(); //Ends the test ui window
+                }
+            #endif
+            #ifdef ImGui_DEBUG
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            #endif
             /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
             /* Poll for and process events */
             glfwPollEvents();
         }
-        delete currentTest;
-        if (currentTest != testMenu)
-			delete testMenu;
-
+        #ifdef ImGui_DEBUG_TestTexture
+        delete currentTest; //Deletes the current test
+        if (currentTest != testMenu) //If the current test is not the test menu
+			delete testMenu; //Deletes the test menu
+        #endif
     }
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    #ifdef ImGui_DEBUG
+        ImGui_ImplOpenGL3_Shutdown(); 
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+    #endif
 
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
-}
-
-static void Cursor_Pos_Callback(GLFWwindow* window, double xpos1, double ypos1)
-{
-    glfwGetFramebufferSize(window, &Window_Width, &Window_Height);
-    xpos =  2 * (xpos1/(Window_Width) - 0.5f);
-    ypos = -2 * (ypos1/(Window_Height) - 0.5f);
-	std::cout << xpos << ", " << ypos << std::endl;
-}
-
-void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_W) {
-        std::cout << key << std::endl;
-        //player.Input();
-    }
 }

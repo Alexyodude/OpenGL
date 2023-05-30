@@ -11,16 +11,16 @@
 namespace test {
 
 	TestTexture2D::TestTexture2D()
-		: m_Proj(glm::ortho(0.0f, 1000.0f, 0.0f, 500.0f, -1.0f, 1.0f)), 
+		: m_Proj(glm::ortho(0.0f, (float)Window_Width, 0.0f, (float)Window_Height, -1.0f, 1.0f)),
 		m_View(glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0))),
 		m_TranslationA(200, 200, 0), m_TranslationB(400, 200, 0)
 	{
 
 		float vertex[] = {
-			-50.0f, -50.0f, 0.0f, 0.0f, // 0
-			 50.0f, -50.0f, 1.0f, 0.0f, // 1
-			 50.0f,  50.0f, 1.0f, 1.0f, // 2
-			-50.0f,  50.0f, 0.0f, 1.0f  // 3
+			-50.0f, -50.0f, 0.0f, 0.0f, 1.0f,// 0
+			 50.0f, -50.0f, 1.0f, 0.0f, 1.0f,// 1
+			 50.0f,  50.0f, 1.0f, 1.0f, 1.0f,// 2
+			-50.0f,  50.0f, 0.0f, 1.0f, 1.0f// 3
 		};
 
 		unsigned int index[] = {
@@ -33,10 +33,11 @@ namespace test {
 
 		m_VAO = std::make_unique<VertexArray>();
 		
-		m_VertexBuffer = std::make_unique<VertexBuffer>(vertex, 4 * 4 * sizeof(float));
+		m_VertexBuffer = std::make_unique<VertexBuffer>(vertex, 4 * 6 * sizeof(float));
 		VertexBufferLayout layout;
 		layout.Push<float>(2);
 		layout.Push<float>(2);
+		layout.Push<float>(1);
 		m_VAO->AddBuffer(*m_VertexBuffer, layout);
 		
 		m_IndexBuffer = std::make_unique<IndexBuffer>(index, 6);
@@ -47,7 +48,8 @@ namespace test {
 		
 		m_Texture = std::make_unique<Texture>("res/textures/test.jpg");
 		m_Texture->Bind();
-		m_Shader->SetUniform1i("u_Texture", 0);
+		int samplers[3] = { 0, 1, 2 };
+		m_Shader->SetUniform1iv("u_Texture", 3, samplers);
 	}
 
 	TestTexture2D::~TestTexture2D()
@@ -85,8 +87,8 @@ namespace test {
 
 	void TestTexture2D::OnImGuiRender()
 	{
-		ImGui::SliderFloat3("Translation A", &m_TranslationA.x, 0.0f, (float)1000.0f);
-		ImGui::SliderFloat3("Translation B", &m_TranslationB.x, 0.0f, (float)1000.0f);
+		ImGui::SliderFloat3("Translation A", &m_TranslationA.x, 0.0f, (float)Window_Width);
+		ImGui::SliderFloat3("Translation B", &m_TranslationB.x, 0.0f, (float)Window_Width);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	}
 }

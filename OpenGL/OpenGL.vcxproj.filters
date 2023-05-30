@@ -81,6 +81,12 @@
     <ClCompile Include="src\tests\TestClearColor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\SandBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Layer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\Basic.shader" />
@@ -1437,9 +1443,24 @@
     <ClInclude Include="src\tests\Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\SandBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Layer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EventListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\textures\test.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\white.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\textures\earth.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

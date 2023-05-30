@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Layer.cpp" />
+    <ClCompile Include="src\SandBox.cpp" />
     <ClCompile Include="src\Log.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Player.cpp" />
@@ -318,6 +320,9 @@
     <ClInclude Include="Dependices\glew-2.1.0\include\GL\wglew.h" />
     <ClInclude Include="Dependices\GLFW\include\GLFW\glfw3.h" />
     <ClInclude Include="Dependices\GLFW\include\GLFW\glfw3native.h" />
+    <ClInclude Include="src\EventListener.h" />
+    <ClInclude Include="src\Layer.h" />
+    <ClInclude Include="src\SandBox.h" />
     <ClInclude Include="src\Log.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Player.h" />
@@ -625,7 +630,9 @@
     <ClInclude Include="src\Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\textures\earth.jpg" />
     <Image Include="res\textures\test.jpg" />
+    <Image Include="res\textures\white.png" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Dependices\glew-2.1.0\lib\Release\Win32\glew32.lib" />
