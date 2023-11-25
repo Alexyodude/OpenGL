@@ -17,7 +17,6 @@
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
-#include "Texture.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -25,9 +24,6 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
-
-#include "tests/TestClearColor.h"
-#include "tests/TestTexture2D.h"
 
 #include "Layer.h"
 
@@ -86,11 +82,8 @@ int main(void)
             testMenu->RegisterTest<test::TestClearColor>("Clear Color");
             testMenu->RegisterTest<test::TestTexture2D>("Texture 2D");
         #endif
-        std::unique_ptr <Texture> T1 = std::make_unique<Texture>("res/textures/test.jpg");
-        std::unique_ptr <Texture> T2 = std::make_unique<Texture>("res/textures/earth.jpg");
         std::unique_ptr <Layer> layer = std::make_unique<Layer>();
-        T1->Bind(1);
-        T2->Bind(2);
+
 
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))

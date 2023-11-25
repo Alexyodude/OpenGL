@@ -5,6 +5,9 @@
 
 #include "Log.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 struct VertexBufferElement // vertex buffer element
 {
 	unsigned int type; // type

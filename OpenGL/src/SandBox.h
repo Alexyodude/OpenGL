@@ -10,7 +10,6 @@
 #include "VertexBuffer.h"
 #include "VertexBufferLayout.h"
 #include "Shader.h"
-#include "Texture.h"
 
 #include "Log.h"
 #include "Renderer.h"
@@ -24,15 +23,23 @@
 
 struct Vertex
 {
-	glm::vec3 m_Position;
-	//glm::vec4 color;
-	glm::vec2 m_TexCoord;
-	unsigned int m_TexIndex;
+	glm::vec2 m_Position;
 
-	static constexpr unsigned int getcount() {return 6; }
+	glm::vec4 m_Color;
+	float m_Mass;
+	float m_Wave;
+	glm::vec2 m_Velocity;
+	glm::vec2 m_CountVelocity;
+	//glm::vec3 m_Weight0;
+	//glm::vec3 m_Weight1;
+	//glm::vec3 m_Weight2;
+	//glm::vec2 m_TexCoord;
+	//unsigned int m_TexIndex;
 
-	Vertex(glm::vec3 m_Position = glm::vec3(0, 0, 0), glm::vec2 m_TexCoord = glm::vec2(0, 0), float m_TexIndex = 0)
-		: m_Position(m_Position), m_TexCoord(m_TexCoord), m_TexIndex(m_TexIndex)
+	static constexpr unsigned int getcount() {return 6+2+4; }
+
+	Vertex(glm::vec2 m_Position, glm::vec4 m_Color, float m_Mass, float m_Wave, glm::vec2 m_Velocity, glm ::vec2 m_CountVelocity)
+		: m_Position(m_Position), m_Color(m_Color), m_Mass(m_Mass), m_Wave(m_Wave), m_Velocity(m_Velocity), m_CountVelocity(m_CountVelocity)
 	{
 	}
 	//~Vertex();
@@ -41,7 +48,19 @@ struct Vertex
 class SandBox
 {
 public:
-	float sideLength = 100.0f / 2; // 100.0f is the width and height of the square
+	float dispersion = 0.105;
+	float mDispersion = 0.3;
+	float repulse = 1;
+	float sqrtTwoOTwo = 0.70710678118;
+	float gap = 1.0f;
+	float accelDamp = 0.1f;
+	float well = 5.0f;
+
+	const int gridLength = 100;
+	float sideLength = 4.0f ; // 10.0f is the width and height of the square
+	unsigned int tileSetSL[100]; //same as gridLength
+	unsigned int tileSetNL[100];	//same as gridLength
+	Vertex* vertMat[100][100];
 
 	SandBox();
 	~SandBox();
@@ -50,11 +69,17 @@ public:
 	void OnRender();
 
 	void OnImGuiRender();
-	void AddQuad(float x, float y, unsigned int texindex);
-	void TileMap();
+	void AddQuad(float x, float y, float mass, glm::vec4(rgba));
+	void SetVerticesMovement(int i, int j, int ioffset, int joffset);
 
 	void SetRenderer(Renderer* m_Renderer);
 	void SetTranslation(glm::vec3 m_Translate);
+	void FollowPlayer();
+
+	void PlayerMovementW();
+	void PlayerMovementA();
+	void PlayerMovementS();
+	void PlayerMovementD();
 
 
 	//unsigned int vertexCount;
@@ -76,5 +101,6 @@ private:
 	
 	glm::mat4 m_Proj, m_View;
 	glm::vec3 m_Translation;
+	glm::vec2 m_Player;
 	
 };

@@ -16,15 +16,27 @@ void Layer::OnUpdate(float deltaTime)
 void Layer::OnEvent(bool* Key)
 {
 	if (Key[GLFW_KEY_A]){
-		m_SandBox->SetTranslation(glm::vec3( 1.0f, 0, 0));
+		#ifdef ScreenMovement
+			m_SandBox->SetTranslation(glm::vec3( 5.0f, 0, 0));
+		#endif // ScreenMovement
+		m_SandBox->PlayerMovementA();
 	}else if (Key[GLFW_KEY_D]) {
-		m_SandBox->SetTranslation(glm::vec3(-1.0f, 0, 0));
+		#ifdef ScreenMovement
+			m_SandBox->SetTranslation(glm::vec3(-5.0f, 0, 0));
+		#endif // ScreenMovement	
+		m_SandBox->PlayerMovementD();
 	}
 	if (Key[GLFW_KEY_W]) {
-		m_SandBox->SetTranslation(glm::vec3(0, -1.0f, 0));
+		#ifdef ScreenMovement
+				m_SandBox->SetTranslation(glm::vec3(0, -5.0f, 0));
+		#endif // ScreenMovement
+		m_SandBox->PlayerMovementW();
 	}
 	else if (Key[GLFW_KEY_S]) {
-		m_SandBox->SetTranslation(glm::vec3(0, 1.0f, 0));
+		#ifdef ScreenMovement
+				m_SandBox->SetTranslation(glm::vec3(0, 5.0f, 0));
+		#endif // ScreenMovement
+		m_SandBox->PlayerMovementS();
 	}
 }
 
