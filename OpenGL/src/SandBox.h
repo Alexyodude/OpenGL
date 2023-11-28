@@ -50,11 +50,13 @@ class SandBox
 public:
 	float dispersion = 0.105;
 	float mDispersion = 0.3;
-	float repulse = 1;
+	float repulse = 1.01;
 	float sqrtTwoOTwo = 0.70710678118;
 	float gap = 1.0f;
 	float accelDamp = 0.1f;
 	float well = 5.0f;
+	float intensity = 1;
+	glm::vec2 accel;
 
 	const int gridLength = 100;
 	float sideLength = 4.0f ; // 10.0f is the width and height of the square
@@ -71,6 +73,7 @@ public:
 	void OnImGuiRender();
 	void AddQuad(float x, float y, float mass, glm::vec4(rgba));
 	void SetVerticesMovement(int i, int j, int ioffset, int joffset);
+	void Vertices1MovementLogic(int i, int j, int ip1, int im1, int jp1, int jm1, float deltaTime);
 
 	void SetRenderer(Renderer* m_Renderer);
 	void SetTranslation(glm::vec3 m_Translate);

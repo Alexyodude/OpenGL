@@ -1,6 +1,6 @@
 //#define ImGui_DEBUG_TestTexture
 #define ImGui_DEBUG
-#define KEY_DEBUG
+//#define KEY_DEBUG
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -84,10 +84,20 @@ int main(void)
         #endif
         std::unique_ptr <Layer> layer = std::make_unique<Layer>();
 
-
+        double lastTime = glfwGetTime();
+        int nbFrames = 0;
         /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {  
+            // Measure speed
+            double currentTime = glfwGetTime();
+            nbFrames++;
+            if (currentTime - lastTime >= 1.0) { // If last prinf() was more than 1 sec ago
+                // printf and reset timer
+                printf("%f ms/frame\n", 1000.0 / double(nbFrames));
+                nbFrames = 0;
+                lastTime += 1.0;
+            }
             #ifdef ImGui_DEBUG
                 ImGui_ImplOpenGL3_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
