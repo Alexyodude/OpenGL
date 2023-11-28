@@ -45,6 +45,30 @@ struct Vertex
 	//~Vertex();
 };
 
+//struct VertexBackend 
+//{
+//	glm::vec2 m_Position;
+//
+//	glm::vec4 m_Color;
+//	float m_Mass;
+//	float m_Wave;
+//	glm::vec2 m_Velocity;
+//	glm::vec2 m_CountVelocity;
+//	//glm::vec3 m_Weight0;
+//	//glm::vec3 m_Weight1;
+//	//glm::vec3 m_Weight2;
+//	//glm::vec2 m_TexCoord;
+//	//unsigned int m_TexIndex;
+//
+//	static constexpr unsigned int getcount() { return 6 + 2 + 4; }
+//
+//	Vertex(glm::vec2 m_Position, glm::vec4 m_Color, float m_Mass, float m_Wave, glm::vec2 m_Velocity, glm::vec2 m_CountVelocity)
+//		: m_Position(m_Position), m_Color(m_Color), m_Mass(m_Mass), m_Wave(m_Wave), m_Velocity(m_Velocity), m_CountVelocity(m_CountVelocity)
+//	{
+//	}
+//	//~Vertex();
+//};
+
 class SandBox
 {
 public:
