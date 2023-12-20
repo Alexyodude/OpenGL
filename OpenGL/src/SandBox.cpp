@@ -1,79 +1,10 @@
 #define EnableEdge
+#define ImGui_DEBUG
 
-
-#define DetectArrayError
-//#define ArrayError
-//#define ArrayError1
-//#define ArrayError1a
-//#define ArrayErrorVML8
-//#define ArrayErrorVML8a
-//#define ArrayErrorVML9
-//#define ArrayErrorVML9a
-//#define ArrayErrorSVM10
-//#define ArrayErrorSVM10A
-//#define ArrayErrorSVM10B
-//#define ArrayErrorSVM10C
-//#define ArrayErrorSVM11
-//#define ArrayErrorSVM11A
-//#define ArrayErrorSVM11B
-//#define ArrayErrorSVM11C
-//#define ArrayErrorSVM12
-//#define ArrayErrorSVM13
-//#define ArrayErrorSVM14
-
-#ifdef HI
-#define ArrayErrorA
-#define ArrayErrorB
-#define ArrayErrorC
-#define ArrayErrorD
-#define ArrayError0
-#define ArrayError1
-#define ArrayError2
-#define ArrayError3
-#define ArrayError4
-#define ArrayErrorVML0
-#define ArrayErrorVML0a
-#define ArrayErrorVML1
-#define ArrayErrorVML1a
-#define ArrayErrorVML2
-#define ArrayErrorVML2a
-#define ArrayErrorVML3
-#define ArrayErrorVML3a
-#define ArrayErrorVML4
-#define ArrayErrorVML4a
-#define ArrayErrorVML5
-#define ArrayErrorVML5a
-#define ArrayErrorVML6
-#define ArrayErrorVML6a
-#define ArrayErrorVML7
-#define ArrayErrorVML7a
-#define ArrayErrorVML8
-#define ArrayErrorVML8a
-#define ArrayErrorVML9
-#define ArrayErrorVML9a
-#define ArrayErrorSVM1
-#define ArrayErrorSVM2
-#define ArrayErrorSVM3
-#define ArrayErrorSVM4
-#define ArrayErrorSVM5
-#define ArrayErrorSVM6
-#define ArrayErrorSVM7
-#define ArrayErrorSVM8
-#define ArrayErrorSVM9
-#define ArrayErrorSVM10
-#define ArrayErrorSVM10A
-#define ArrayErrorSVM10B
-#define ArrayErrorSVM10C
-#define ArrayErrorSVM11
-#define ArrayErrorSVM11A
-#define ArrayErrorSVM11B
-#define ArrayErrorSVM11C
-#define ArrayErrorSVM12
-#define ArrayErrorSVM13
-#define ArrayErrorSVM14
-#endif
+//#define DetectArrayError
 
 #include "SandBox.h"
+#include "ShaderSource.h" // This is where the shader source code is stored
 
 
 SandBox::SandBox()
@@ -81,60 +12,49 @@ SandBox::SandBox()
 	m_View(glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0))),
 	m_Translation(0, 0, 0), m_Renderer(), m_Layout(new VertexBufferLayout()), m_Player(0, 0)
 {
-	//GLCall(glEnable(GL_BLEND));
-	//GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+	GLCall(glEnable(GL_BLEND));
+	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+	m_Player_Cam = glm::vec2(gridLengthBackend * 0.5, gridLengthBackend * 0.5);
 	m_VAO = std::make_unique<VertexArray>();
 
-	m_Shader = std::make_unique<Shader>("res/shaders/Basic.shader");
+	m_Shader = std::make_unique<Shader>(
+		ShaderSource::BasicVertexShader,
+		ShaderSource::BasicFragmentShader
+	);
+	//m_Shader = std::make_unique<Shader>("res/shaders/Basic.shader");
 	m_Shader->Bind();
-	//m_Shader->SetUniform4f("u_Color", 0.7f, 0.6f, 0.5f, 1.0f);
 
 	m_Layout->Push<float>(2);
 	m_Layout->Push<float>(4);
-	m_Layout->Push<float>(1);
-	m_Layout->Push<float>(1);
-	m_Layout->Push<float>(2);
-	m_Layout->Push<float>(2);
 
-	for (int i = 0; i < gridLength; i++) {
-		tileSetSL[i] = i * (sideLength + gap);
-		tileSetNL[i] = i * (gap);
-		//tileSetTL[i][2] = -sideLength + x, -sideLength + i * (2 * sideLength + 5);
-		//tileSetTL[i][1]
-	}
-	//float testMass[10][10] = {
-	//	  {0, 1, 1, 0, 1, 0, 1, 1, 1, 0}
-	//	, {0, 1, 1, 1, 1, 0, 0, 1, 0, 1}
-	//	, {0, 0, 1, 0, 0, 1, 1, 1, 0, 0}
-	//	, {1, 1, 0, 0, 0, 0, 0, 0, 0, 1}
-	//	, {0, 0, 0, 0, 1, 1, 0, 0, 0, 0}
-	//	, {1, 0, 0, 0, 1, 1, 0, 0, 0, 0}
-	//	, {1, 0, 0, 0, 1, 0, 0, 0, 0, 0}
-	//	, {0, 0, 0, 0, 1, 1, 0, 0, 0, 0}
-	//	, {0, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-	//	, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
-	for (int i = 0; i < gridLength; i++) {
-		for (int j = 0; j < gridLength; j++) {
-			//SandBox::AddQuad(tileSetSL[i], tileSetSL[j], glm::vec4(std::rand() / (float)RAND_MAX, std::rand() / (float)RAND_MAX, std::rand() / (float)RAND_MAX, 1.0f));
+	/*
+	Initilizes the backend grid and the front end grid
+	*/
+	for (int i = 0; i < gridLengthBackend; i++) {
+		for (int j = 0; j < gridLengthBackend; j++) {
 			float mass = std::rand() / (float)RAND_MAX-0.9;
-			//SandBox::AddQuad(tileSetSL[i], tileSetSL[j], testMass[j][i], glm::vec4(1.0f, 1.0f, 1.0f, testMass[j][i]));
-			if (i - 10 < (int)gridLength * 0.5 && j - 10 < (int)gridLength * 0.5
-				&& i + 10 > (int)gridLength * 0.5 && j + 10 > (int)gridLength * 0.5) {
-				if (i == (int)gridLength * 0.5 && j == (int)gridLength * 0.5) {
-					m_Player = glm::vec2(i*4, j* gridLength*4);
-					SandBox::AddQuad(tileSetSL[i], tileSetSL[j], 1, glm::vec4(0.8, 0.4, 0.2, 1.0f));
+			if (i - 10 < (int)gridLengthBackend * 0.5 && j - 10 < (int)gridLengthBackend * 0.5
+				&& i + 10 > (int)gridLengthBackend * 0.5 && j + 10 > (int)gridLengthBackend * 0.5) {
+				if (i == (int)gridLengthBackend * 0.5 && j == (int)gridLengthBackend * 0.5) {
+					m_Player = glm::vec2(i, j * gridLengthBackend);
+					SandBox::AddQuadBackend(1, glm::vec4(0.8, 0.4, 0.2, 1.0f));
 					std::cout << "i: " << i << " j: " << j << std::endl;
 				}
 				else {
-					SandBox::AddQuad(tileSetSL[i], tileSetSL[j], 0, glm::vec4(1.0f, 1.0f, 1.0f, 0));
+					SandBox::AddQuadBackend(0, glm::vec4(1.0f, 1.0f, 1.0f, 0));
 				}
-			}else if (mass <= 0) {
-				SandBox::AddQuad(tileSetSL[i], tileSetSL[j], 0, glm::vec4(1.0f, 1.0f, 1.0f, 0));
-			}else if (mass > 0) {
-				SandBox::AddQuad(tileSetSL[i], tileSetSL[j], 1, glm::vec4(mass*10, 1, mass * 10, 1.0f));
 			}
-			
-			//vertMat[i][j] = &(vertices1[4 * (i + gridLength * j)]);
+			else if (mass <= 0) {
+				SandBox::AddQuadBackend(0, glm::vec4(1.0f, 1.0f, 1.0f, 0));
+			}
+			else if (mass > 0) {
+				SandBox::AddQuadBackend(1, glm::vec4(0.6, 1, 0.6, 1.0f));
+			}
+		}
+	}
+	for (int i = 0; i < gridLength; i++) {
+		for (int j = 0; j < gridLength; j++) {
+			SandBox::AddQuad((i - gridLength * 0.5) * (sideLength + gap) + Window_Width * 0.5, (j - gridLength * 0.5) * (sideLength + gap) + Window_Height * 0.5, verticesBackend[m_Player[0] - (gridLength-1) * 0.5 + i + m_Player[1] + (j - (gridLength - 1) * 0.5) * gridLengthBackend].m_Color);
 		}
 	}
 }
@@ -145,103 +65,74 @@ SandBox::~SandBox()
 
 void SandBox::OnUpdate(float deltaTime)
 {
+	//std::cout << m_Player[0] << " " << m_Player[1] << std::endl;
 	/*
 	|	|	|
 	|	|	|
 	|	|	0
 	*/
-#ifdef ArrayErrorA
-	std::cout << "A" << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-	Vertices1MovementLogic(0, gridLength - 1, 1, gridLength - 1, 0, gridLength - 2, deltaTime);
+	Vertices1MovementLogic(0, gridLengthBackend - 1, 1, gridLengthBackend - 1, 0, gridLengthBackend - 2, deltaTime);
 #endif
 	/*
 	|	|	0
 	|	|	|
 	|	|	|
 	*/
-#ifdef ArrayErrorB
-	std::cout << "B" << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-	Vertices1MovementLogic(gridLength - 1, gridLength - 1, 0, gridLength - 2, 0, gridLength - 2, deltaTime);
+	Vertices1MovementLogic(gridLengthBackend - 1, gridLengthBackend - 1, 0, gridLengthBackend - 2, 0, gridLengthBackend - 2, deltaTime);
 #endif
 	/*
 	|	|	|
 	|	|	|
 	0	|	|
 	*/
-#ifdef ArrayErrorC
-	std::cout << "C" << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-	Vertices1MovementLogic(0, 0, 1, gridLength - 1, 1, gridLength - 1, deltaTime);
+	Vertices1MovementLogic(0, 0, 1, gridLengthBackend - 1, 1, gridLengthBackend - 1, deltaTime);
 #endif
 	/*
 	0	|	|
 	|	|	|
 	|	|	|
 	*/
-#ifdef ArrayErrorD
-	std::cout << "D" << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-	Vertices1MovementLogic(gridLength - 1, 0, 0, gridLength - 2, 1, gridLength - 1, deltaTime);
+	Vertices1MovementLogic(gridLengthBackend - 1, 0, 0, gridLengthBackend - 2, 1, gridLengthBackend - 1, deltaTime);
 #endif
-	for (int i = 1; i < gridLength-1; i++) {
+	for (int i = 1; i < gridLengthBackend-1; i++) {
 		/*
 		|	|	|
 		0	|	|
 		|	|	|
 		*/
-#ifdef ArrayError0
-		std::cout << 0 << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-		Vertices1MovementLogic(i, 0, i + 1, i - 1, 1, gridLength - 1, deltaTime);
+		Vertices1MovementLogic(i, 0, i + 1, i - 1, 1, gridLengthBackend - 1, deltaTime);
 #endif
 		/*
 		|	|	|
 		|	|	0
 		|	|	|
 		*/
-#ifdef ArrayError1
-		std::cout << 1 << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-#ifdef ArrayError1A
-		std::cout << "1A" << std::endl;
-#endif // ArrayError
-		Vertices1MovementLogic(i, gridLength - 1, i + 1, i - 1, 0, gridLength - 2, deltaTime);
-#ifdef ArrayError1B
-		std::cout << "1B" << std::endl;
-#endif // ArrayError
+		Vertices1MovementLogic(i, gridLengthBackend - 1, i + 1, i - 1, 0, gridLengthBackend - 2, deltaTime);
 #endif
 		/*
 		|	|	|
 		|	|	|
 		|	0	|
 		*/
-#ifdef ArrayError2
-		std::cout << 2 << std::endl;
-#endif // ArrayError
 #ifdef EnableEdge
-		Vertices1MovementLogic(0, i, 1, gridLength - 1, i + 1, i - 1, deltaTime);
+		Vertices1MovementLogic(0, i, 1, gridLengthBackend - 1, i + 1, i - 1, deltaTime);
 #endif
 		/*
 		|	0	|
 		|	|	|
 		|	|	|
 		*/
-#ifdef ArrayError3
-		std::cout << 3 << std::endl;
-#endif // ArrayError
 
 #ifdef EnableEdge
-		Vertices1MovementLogic(gridLength - 1, i, 0, gridLength - 2, i + 1, i - 1, deltaTime);
+		Vertices1MovementLogic(gridLengthBackend - 1, i, 0, gridLengthBackend - 2, i + 1, i - 1, deltaTime);
 #endif
-		for (int j = 1; j < gridLength-1; j++) {
+		for (int j = 1; j < gridLengthBackend-1; j++) {
 			/*
 			|	|	|
 			|	0	|
@@ -250,632 +141,457 @@ void SandBox::OnUpdate(float deltaTime)
 			Vertices1MovementLogic(i, j, i + 1, i - 1, j + 1, j - 1, deltaTime);
 		}
 	}
+
+	for (int i = 0; i < gridLength; i++) {
+		for (int j = 0; j < gridLength; j++) {
+			if (m_Player[0] - (gridLength - 1) * 0.5 + i < 0) {
+				if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend < 0) {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+				}
+				else if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend > (gridLengthBackend - 1) * gridLengthBackend) {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+				}
+				else {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+				}
+			}
+			else if (m_Player[0] - (gridLength - 1) * 0.5 + i > gridLengthBackend - 1) {
+				if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend < 0) {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+				}
+				else if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend > (gridLengthBackend - 1) * gridLengthBackend) {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+				}
+				else {
+#ifdef DetectArrayError
+					Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+					Error(m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend", verticesBackend.size());
+#endif
+					vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+					vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+				}
+			}
+			else if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend < 0) {
+#ifdef DetectArrayError
+				Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+				Error(m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+				vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j + gridLengthBackend)) * gridLengthBackend].m_Color;
+			}
+			else if (m_Player[1] + ((1 - gridLength) * 0.5 + j) * gridLengthBackend > (gridLengthBackend - 1) * gridLengthBackend) {
+#ifdef DetectArrayError
+				Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+				Error(m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i - gridLengthBackend + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend", verticesBackend.size());
+#endif
+				vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j - gridLengthBackend)) * gridLengthBackend].m_Color;
+			}
+			else {
+#ifdef DetectArrayError
+				Error(i + j * gridLength + 0, "i + j * gridLength + 0", vertices.size());
+				Error(m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend, "m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend", verticesBackend.size());
+#endif
+				vertices[(i + j * gridLength) * 4 + 0].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 1].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 2].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+				vertices[(i + j * gridLength) * 4 + 3].m_Color = verticesBackend[m_Player[0] - (gridLength - 1) * 0.5 + i + m_Player[1] + (((1 - gridLength) * 0.5 + j)) * gridLengthBackend].m_Color;
+			}
+		}
+	}
 }
 
-void SandBox::SetVerticesMovement(int i, int j, int ioffset, int joffset){
+void SandBox::SetVerticesMovement(int& i, int& j, int ioffset, int joffset){
 	//std::cout << "SetVerticesMovement" << std::endl;
+#ifdef DetectArrayError
+	Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+#endif
 	if (
-#ifdef ArrayErrorSVM1
-		std::cout << "svm1" << std::endl &&
-#endif // ArrayError
 		ioffset == 1 && joffset == 1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] -= sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] -= sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] -= sqrtTwoOTwo;
 	}
 	else if (
-#ifdef ArrayErrorSVM2
-		std::cout << "svm2" << std::endl &&
-#endif // ArrayError
 		ioffset == 1 && joffset == -1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] += sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] -= sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] += sqrtTwoOTwo;
 	}
 	else if (
-#ifdef ArrayErrorSVM3
-		std::cout << "svm3" << std::endl &&
-#endif // ArrayError
 		ioffset == -1 && joffset == 1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] -= sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] -= sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] += sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] -= sqrtTwoOTwo;
 	}
 	else if (
-#ifdef ArrayErrorSVM4
-		std::cout << "svm4" << std::endl &&
-#endif // ArrayError
 		ioffset == -1 && joffset == -1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] += sqrtTwoOTwo;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] += sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] += sqrtTwoOTwo;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] += sqrtTwoOTwo;
 	}
 	else if (
-#ifdef ArrayErrorSVM5
-		std::cout << "svm5" << std::endl &&
-#endif // ArrayError
 		ioffset == 0 && joffset == 1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] -= 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] -= 1;
 	}															
 	else if (
-#ifdef ArrayErrorSVM6
-		std::cout << "svm6" << std::endl &&
-#endif // ArrayError
 		ioffset == 0 && joffset == -1) {
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity[1] += 1;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[1] += 1;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[1] += 1;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[1] += 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] += 1;
 	}
 	else if (
-#ifdef ArrayErrorSVM7
-		std::cout << "svm7" << std::endl &&
-#endif // ArrayError
 		ioffset == 1 && joffset == 0) {
-		vertices1[(i + j * gridLength) * 4    ].m_CountVelocity[0] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] -= 1;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] -= 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] -= 1;
 	}
 	else if (
-#ifdef ArrayErrorSVM8
-		std::cout << "svm8" << std::endl &&
-#endif // ArrayError
 		ioffset == -1 && joffset == 0) {
-		vertices1[(i + j * gridLength) * 4    ].m_CountVelocity[0] += 1;
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity[0] += 1;
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity[0] += 1;
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity[0] += 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] += 1;
 	}
 	if (
-#ifdef ArrayErrorSVM10
-		std::cout << "svm10" << std::endl &&
-#endif // ArrayError
 		j + joffset < 0) {
 		if (
-#ifdef ArrayErrorSVM10A
-			std::cout << "svm10A" << std::endl &&
-#endif // ArrayError
 			i + ioffset < 0) {
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((gridLength + ioffset) * 4, (gridLength + joffset) * gridLength * 4);
+			if (m_Player == glm::vec2(i , j * gridLengthBackend )) {
+				m_Player = glm::vec2((gridLengthBackend + ioffset) , (gridLengthBackend + joffset) * gridLengthBackend );
 			}
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4	  ].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4	  ].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4	  ].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4	  ].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+#ifdef DetectArrayError
+			Error((gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend), "(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)", verticesBackend.size());
+#endif
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(gridLengthBackend + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 		else if (
-#ifdef ArrayErrorSVM10B
-			std::cout << "svm10B" << std::endl &&
-#endif // ArrayError
-			i + ioffset > gridLength - 1) {
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((ioffset) * 4, (gridLength + joffset) * gridLength * 4);
+			i + ioffset > gridLengthBackend - 1) {
+			if (m_Player == glm::vec2(i , j * gridLengthBackend)) {
+				m_Player = glm::vec2((ioffset), (gridLengthBackend + joffset) * gridLengthBackend);
 			}
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4	 ].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+#ifdef DetectArrayError
+			Error((ioffset + (gridLengthBackend + joffset) * gridLengthBackend), "(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)", verticesBackend.size());
+#endif
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 		else {
-#ifdef ArrayErrorSVM10C
-			std::cout << "svm10C" << std::endl;
-#endif // ArrayError
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((i + ioffset) * 4, (gridLength + joffset) * gridLength * 4);
+			if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+				m_Player = glm::vec2((i + ioffset), (gridLengthBackend + joffset) * gridLengthBackend);
 			}
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4	 ].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4	].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (gridLength + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-#ifdef ArrayErrorSVM10C
-			std::cout << "svm10C" << std::endl;
-#endif // ArrayError
+#ifdef DetectArrayError
+			Error((i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend), "(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)", verticesBackend.size());
+#endif
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(i + ioffset + (gridLengthBackend + joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 	}
 	else if (
-#ifdef ArrayErrorSVM11
-		std::cout << "svm11" << std::endl &&
-#endif // ArrayError
-		j + joffset > gridLength - 1) {
+		j + joffset > gridLengthBackend - 1) {
 		if (
-#ifdef ArrayErrorSVM11A
-			std::cout << "svm11A" << std::endl &&
-#endif // ArrayError
 			i + ioffset < 0) {
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((gridLength + ioffset) * 4, (joffset) * gridLength * 4);
+			if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+				m_Player = glm::vec2((gridLengthBackend + ioffset), (joffset) * gridLengthBackend);
 			}
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+#ifdef DetectArrayError
+			Error((gridLengthBackend + ioffset + (joffset) * gridLengthBackend), "(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)11A", verticesBackend.size());
+#endif
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(gridLengthBackend + ioffset + (joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 		else if (
-#ifdef ArrayErrorSVM11B
-			std::cout << "svm11B" << std::endl &&
-#endif // ArrayError
-			i + ioffset > gridLength - 1) {
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((ioffset) * 4, (joffset) * gridLength * 4);
+			i + ioffset > gridLengthBackend - 1) {
+			if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+				m_Player = glm::vec2((ioffset), (joffset) * gridLengthBackend);
 			}
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(ioffset + (joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+		#ifdef DetectArrayError
+			Error((ioffset + (joffset) * gridLengthBackend), "(ioffset + (joffset) * gridLengthBackend)11B", verticesBackend.size());
+		#endif
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(ioffset + (joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 		else {
-#ifdef ArrayErrorSVM11C
-			std::cout << "svm11C " << (gridLength - 1 + (gridLength - 1) * gridLength) * 4 << " " << (i + ioffset + (joffset) * gridLength) * 4 <<  " " << (i + j * gridLength) * 4  << std::endl;
-#endif // ArrayError
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((i + ioffset) * 4, (joffset) * gridLength * 4);
+			if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+				m_Player = glm::vec2((i + ioffset), (joffset) * gridLengthBackend);
 			}
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(i + ioffset + (joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-#ifdef ArrayErrorSVM11C
-			std::cout << "svm11C" << std::endl;
-#endif // ArrayError
+		#ifdef DetectArrayError
+			Error(i + ioffset + (joffset)*gridLengthBackend, "i + ioffset + (joffset) * gridLengthBackend", verticesBackend.size());
+		#endif
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(i + ioffset + (joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 	}
 	else if (
-#ifdef ArrayErrorSVM12
-		std::cout << "svm12" << std::endl &&
-#endif // ArrayError
 		i + ioffset < 0) {
-			if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-				m_Player = glm::vec2((gridLength + ioffset) * 4, (j + joffset) * gridLength * 4);
+			if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+				m_Player = glm::vec2((gridLengthBackend + ioffset), (j + joffset) * gridLengthBackend);
 			}
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4	 ].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4	].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4	].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4	].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-			vertices1[(gridLength + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+			#ifdef DetectArrayError
+				Error((gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend), "(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)12", verticesBackend.size());
+			#endif
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_Mass			= verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_Color[0]		= verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_Color[1]		= verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_Color[2]		= verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_CountVelocity	= verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+			verticesBackend[(gridLengthBackend + ioffset + (j + joffset) * gridLengthBackend)].m_Velocity		= verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 		}
 	else if (
-#ifdef ArrayErrorSVM13
-			std::cout << "svm13" << std::endl &&
-#endif // ArrayError
-			i + ioffset > gridLength - 1) {
-				if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-					m_Player = glm::vec2((ioffset) * 4, (j + joffset) * gridLength * 4);
+			i + ioffset > gridLengthBackend - 1) {
+				if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+					m_Player = glm::vec2((ioffset), (j + joffset) * gridLengthBackend);
 				}
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4	].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4	].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4	].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4	].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(ioffset + (j + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
+		#ifdef DetectArrayError
+				Error((ioffset + (j + joffset) * gridLengthBackend), "(ioffset + (j + joffset) * gridLengthBackend)13", verticesBackend.size());
+		#endif
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+		verticesBackend[(ioffset + (j + joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 	}
 	else {
-#ifdef ArrayErrorSVM14
-		std::cout << "svm14 " << (gridLength - 1 + (gridLength - 1) * gridLength) * 4 << " " << (i + ioffset + (j + joffset) * gridLength) * 4 << std::endl;
-#endif // ArrayError
-		if (m_Player == glm::vec2(i * 4, j * gridLength * 4)) {
-			m_Player = glm::vec2((i + ioffset) * 4, (j + joffset) * gridLength * 4);
+		if (m_Player == glm::vec2(i, j * gridLengthBackend)) {
+			m_Player = glm::vec2((i + ioffset), (j + joffset) * gridLengthBackend);
 		}
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4	].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Mass = vertices1[(i + j * gridLength) * 4].m_Mass;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4	].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[0] = vertices1[(i + (j)*gridLength) * 4].m_Color[0];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4	].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[1] = vertices1[(i + (j)*gridLength) * 4].m_Color[1];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4	].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Color[2] = vertices1[(i + (j)*gridLength) * 4].m_Color[2];
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_CountVelocity = vertices1[(i + j * gridLength) * 4].m_CountVelocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 1].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 2].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-		vertices1[(i + ioffset + (j + joffset) * gridLength) * 4 + 3].m_Velocity = vertices1[(i + j * gridLength) * 4].m_Velocity;
-#ifdef ArrayErrorSVM14
-		std::cout << "svm14" << std::endl;
-#endif // ArrayError
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_Mass = verticesBackend[(i + j * gridLengthBackend)].m_Mass;
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_Color[0] = verticesBackend[(i + j * gridLengthBackend)].m_Color[0];
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_Color[1] = verticesBackend[(i + j * gridLengthBackend)].m_Color[1];
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_Color[2] = verticesBackend[(i + j * gridLengthBackend)].m_Color[2];
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity;
+		verticesBackend[(i + ioffset + (j + joffset) * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
 	}		
-		vertices1[(i + j * gridLength) * 4	].m_Mass = 0;
-		vertices1[(i + j * gridLength) * 4 + 1].m_Mass = 0;
-		vertices1[(i + j * gridLength) * 4 + 2].m_Mass = 0;
-		vertices1[(i + j * gridLength) * 4 + 3].m_Mass = 0;
+		#ifdef DetectArrayError
+			Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+		#endif
+		verticesBackend[(i + j * gridLengthBackend)].m_Mass = 0;
 
-		vertices1[(i + (j) * gridLength) * 4	].m_Color = glm::vec4(glm::vec3(1,1,1), vertices1[(i + (j) * gridLength) * 4].m_Color[3]);
-		vertices1[(i + (j) * gridLength) * 4 + 1].m_Color = glm::vec4(glm::vec3(1,1,1), vertices1[(i + (j) * gridLength) * 4].m_Color[3]);
-		vertices1[(i + (j) * gridLength) * 4 + 2].m_Color = glm::vec4(glm::vec3(1,1,1), vertices1[(i + (j) * gridLength) * 4].m_Color[3]);
-		vertices1[(i + (j) * gridLength) * 4 + 3].m_Color = glm::vec4(glm::vec3(1,1,1), vertices1[(i + (j) * gridLength) * 4].m_Color[3]);
-		
-		vertices1[(i + j * gridLength) * 4	  ].m_CountVelocity = glm::vec2(0, 0);
-		vertices1[(i + j * gridLength) * 4 + 1].m_CountVelocity = glm::vec2(0, 0);
-		vertices1[(i + j * gridLength) * 4 + 2].m_CountVelocity = glm::vec2(0, 0);
-		vertices1[(i + j * gridLength) * 4 + 3].m_CountVelocity = glm::vec2(0, 0);
+		verticesBackend[(i + j * gridLengthBackend)].m_Color[0] = 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_Color[1] = 1;
+		verticesBackend[(i + j * gridLengthBackend)].m_Color[2] = 1;
 
-		vertices1[(i + j * gridLength) * 4	  ].m_Velocity = glm::vec2(0,0);
-		vertices1[(i + j * gridLength) * 4 + 1].m_Velocity = glm::vec2(0,0);
-		vertices1[(i + j * gridLength) * 4 + 2].m_Velocity = glm::vec2(0,0);
-		vertices1[(i + j * gridLength) * 4 + 3].m_Velocity = glm::vec2(0,0);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity = glm::vec2(0, 0);
+		verticesBackend[(i + j * gridLengthBackend)].m_Velocity = glm::vec2(0,0);
+}
+
+void SandBox::SetVerticesMomentum(int& i, int& j, int i1, int j1) {
+#ifdef DetectArrayError
+	Error((i1 + j1 * gridLengthBackend), "(i1 + j1 * gridLengthBackend)", verticesBackend.size());
+	Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+#endif
+	verticesBackend[(i1 + j1 * gridLengthBackend)].m_CountVelocity = verticesBackend[(i + j * gridLengthBackend)].m_Mass * verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity / verticesBackend[(i1 + j1 * gridLengthBackend)].m_Mass;
+	verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity = glm::vec2(0);
+	verticesBackend[(i1 + j1 * gridLengthBackend)].m_Velocity = verticesBackend[(i + j * gridLengthBackend)].m_Mass * verticesBackend[(i + j * gridLengthBackend)].m_Velocity / verticesBackend[(i1 + j1 * gridLengthBackend)].m_Mass;
+	//verticesBackend[(i1 + j1 * gridLengthBackend)].m_Velocity += verticesBackend[(i + j * gridLengthBackend)].m_Velocity;
+	verticesBackend[(i + j * gridLengthBackend)].m_Velocity = glm::vec2(0);
 }
 
 void SandBox::Vertices1MovementLogic(int i, int j, int ip1, int im1, int jp1, int jm1, float deltaTime) {
-	//if (accel[0] > 1 || accel[1] > 1) {
-//	std::cout << accel[0] << " " << accel[1] << std::endl;
-//}
-//if (vertices1[(i + j * gridLength) * 4].m_Velocity[0] > 1 || vertices1[(i + j * gridLength) * 4].m_Velocity[1] > 1)
-//{
-//	std::cout << vertices1[(i + j * gridLength) * 4].m_Velocity[0] << " " << vertices1[(i + j * gridLength) * 4].m_Velocity[1] << std::endl;
-//}
-//if (vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] > 1 || vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] > 1) {
-//	std::cout << vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] << " " << vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] << std::endl;
-//	//std::cout << " TH: "
-//	//	<< tanh(vertices1[(i + j * gridLength) * 4].m_CountVelocity + vertices1[(i + j * gridLength) * 4].m_Velocity * deltaTime)[0]
-//	//	<< " "
-//	//	<< tanh(vertices1[(i + j * gridLength) * 4].m_CountVelocity + vertices1[(i + j * gridLength) * 4].m_Velocity * deltaTime)[1] << std::endl;
-//}
-	vertices1[(i + j * gridLength) * 4].m_Wave
-		= (vertices1[(i + j * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + j * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + j * gridLength) * 4].m_Wave
-			+ vertices1[(i + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(i + (jm1) * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + (jm1) * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + (jm1) * gridLength) * 4].m_Wave) * dispersion
-		+ vertices1[(i + j * gridLength) * 4].m_Mass * mDispersion;
-	//std::cout << "Wave "<< i << " " << j << " " << vertices1[(i + j * gridLength) * 4].m_Wave << " " << vertices1[(i + j * gridLength) * 4].m_Mass << std::endl;
-	vertices1[(i + j * gridLength) * 4].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 1].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 2].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 3].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4].m_Wave
-		= (vertices1[(i + j * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + j * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + j * gridLength) * 4].m_Wave
-			+ vertices1[(i + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(i + (jm1) * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + (jm1) * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + (jm1) * gridLength) * 4].m_Wave) * dispersion
-		+ vertices1[(i + j * gridLength) * 4].m_Mass * mDispersion;
-	//std::cout << "Wave "<< i << " " << j << " " << vertices1[(i + j * gridLength) * 4].m_Wave << " " << vertices1[(i + j * gridLength) * 4].m_Mass << std::endl;
-	vertices1[(i + j * gridLength) * 4].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 1].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 2].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	vertices1[(i + j * gridLength) * 4 + 3].m_Color[3] = vertices1[(i + j * gridLength) * 4].m_Wave * intensity;
-	accel = glm::vec2(
-		vertices1[(ip1 + j * gridLength) * 4].m_Wave * 0.05
-		- vertices1[(im1 + j * gridLength) * 4].m_Wave * 0.05
+#ifdef DetectArrayError
+	Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+	Error((ip1 + j * gridLengthBackend), "(ip1 + j * gridLengthBackend)", verticesBackend.size());
+	Error((im1 + j * gridLengthBackend), "(im1 + j * gridLengthBackend)", verticesBackend.size());
+	Error((i + (jp1) * gridLengthBackend), "(i + (jp1) * gridLengthBackend)", verticesBackend.size());
+	Error((i + (jm1) * gridLengthBackend), "(i + (jm1) * gridLengthBackend)", verticesBackend.size());
+	Error((ip1 + (jp1) * gridLengthBackend), "(ip1 + (jp1) * gridLengthBackend)", verticesBackend.size());
+	Error((ip1 + (jm1) * gridLengthBackend), "(ip1 + (jm1) * gridLengthBackend)", verticesBackend.size());
+	Error((im1 + (jp1) * gridLengthBackend), "(im1 + (jp1) * gridLengthBackend)", verticesBackend.size());
+	Error((im1 + (jm1) * gridLengthBackend), "(im1 + (jm1) * gridLengthBackend)", verticesBackend.size());
+#endif
+	verticesBackend[(i + j * gridLengthBackend)].m_Wave
+		= (verticesBackend[(i + j * gridLengthBackend)].m_Wave
+			+ verticesBackend[(ip1 + j * gridLengthBackend)].m_Wave
+			+ verticesBackend[(im1 + j * gridLengthBackend)].m_Wave
+			+ verticesBackend[(i + (jp1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(i + (jm1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(ip1 + (jp1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(ip1 + (jm1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(im1 + (jp1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(im1 + (jm1) * gridLengthBackend)].m_Wave) * dispersion
+		+ verticesBackend[(i + j * gridLengthBackend)].m_Mass * mDispersion;
+	//std::cout << "Wave "<< i << " " << j << " " << vertices1[(i + j * gridLengthBackend) ].m_Wave << " " << vertices1[(i + j * gridLengthBackend) ].m_Mass << std::endl;
+	verticesBackend[(i + j * gridLengthBackend)].m_Color[3] = tanh(verticesBackend[(i + j * gridLengthBackend)].m_Wave * intensity);
+	//std::cout << "Color " << i << " " << j << " " << verticesBackend[(i + j * gridLengthBackend)].m_Color[3] << std::endl;
+#ifdef DetectArrayError
+	Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+#endif
+	if (verticesBackend[(i + j * gridLengthBackend)].m_Mass > 0) {
+		accel = glm::vec2(
+		verticesBackend[(ip1 + j * gridLengthBackend)].m_Wave
+		- verticesBackend[(im1 + j * gridLengthBackend)].m_Wave 
 		+ (
-			-vertices1[(ip1 + j * gridLength) * 4].m_Mass
-			+ vertices1[(im1 + j * gridLength) * 4].m_Mass) * repulse
+			-verticesBackend[(ip1 + j * gridLengthBackend)].m_Mass
+			+ verticesBackend[(im1 + j * gridLengthBackend)].m_Mass) * repulse
 		+ sqrtTwoOTwo * (
-			vertices1[(ip1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(ip1 + (jm1) * gridLength) * 4].m_Wave
-			- vertices1[(im1 + (jp1) * gridLength) * 4].m_Wave
-			- vertices1[(im1 + (jm1) * gridLength) * 4].m_Wave
-			+ (-vertices1[(ip1 + (jp1) * gridLength) * 4].m_Mass
-				- vertices1[(ip1 + (jm1) * gridLength) * 4].m_Mass
-				+ vertices1[(im1 + (jp1) * gridLength) * 4].m_Mass
-				+ vertices1[(im1 + (jm1) * gridLength) * 4].m_Mass) * repulse
+			verticesBackend[(ip1 + (jp1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(ip1 + (jm1) * gridLengthBackend)].m_Wave
+			- verticesBackend[(im1 + (jp1) * gridLengthBackend)].m_Wave
+			- verticesBackend[(im1 + (jm1) * gridLengthBackend)].m_Wave
+			+ (- verticesBackend[(ip1 + (jp1) * gridLengthBackend)].m_Mass
+				- verticesBackend[(ip1 + (jm1) * gridLengthBackend)].m_Mass
+				+ verticesBackend[(im1 + (jp1) * gridLengthBackend)].m_Mass
+				+ verticesBackend[(im1 + (jm1) * gridLengthBackend)].m_Mass) * repulse
 			)
 		,
-		vertices1[(i + (jp1) * gridLength) * 4].m_Wave
-		- vertices1[(i + (jm1) * gridLength) * 4].m_Wave
+		verticesBackend[(i + (jp1) * gridLengthBackend)].m_Wave
+		- verticesBackend[(i + (jm1) * gridLengthBackend)].m_Wave
 		+ (
-			-vertices1[(i + (jp1) * gridLength) * 4].m_Mass
-			+ vertices1[(i + (jm1) * gridLength) * 4].m_Mass) * repulse
+			- verticesBackend[(i + (jp1) * gridLengthBackend)].m_Mass
+			+ verticesBackend[(i + (jm1) * gridLengthBackend)].m_Mass) * repulse
 		+ sqrtTwoOTwo * (
-			vertices1[(ip1 + (jp1) * gridLength) * 4].m_Wave
-			+ vertices1[(im1 + (jp1) * gridLength) * 4].m_Wave
-			- vertices1[(ip1 + (jm1) * gridLength) * 4].m_Wave
-			- vertices1[(im1 + (jm1) * gridLength) * 4].m_Wave
-			+ (-vertices1[(ip1 + (jp1) * gridLength) * 4].m_Mass
-				- vertices1[(im1 + (jp1) * gridLength) * 4].m_Mass
-				+ vertices1[(ip1 + (jm1) * gridLength) * 4].m_Mass
-				+ vertices1[(im1 + (jm1) * gridLength) * 4].m_Mass) * repulse
+			verticesBackend[(ip1 + (jp1) * gridLengthBackend)].m_Wave
+			+ verticesBackend[(im1 + (jp1) * gridLengthBackend)].m_Wave
+			- verticesBackend[(ip1 + (jm1) * gridLengthBackend)].m_Wave
+			- verticesBackend[(im1 + (jm1) * gridLengthBackend)].m_Wave
+			+ (- verticesBackend[(ip1 + (jp1) * gridLengthBackend)].m_Mass
+				- verticesBackend[(im1 + (jp1) * gridLengthBackend)].m_Mass
+				+ verticesBackend[(ip1 + (jm1) * gridLengthBackend)].m_Mass
+				+ verticesBackend[(im1 + (jm1) * gridLengthBackend)].m_Mass) * repulse
 			)
 	);
-	if (vertices1[(i + j * gridLength) * 4].m_Mass > 0) {
-		vertices1[(i + j * gridLength) * 4].m_Velocity[0] = vertices1[(i + j * gridLength) * 4].m_Velocity[0] + tanh(accel[0] * deltaTime * accelDamp);
-		vertices1[(i + j * gridLength) * 4].m_Velocity[1] = vertices1[(i + j * gridLength) * 4].m_Velocity[1] + tanh(accel[1] * deltaTime * accelDamp);
+#ifdef DetectArrayError
+		Error((i + j * gridLengthBackend), "(i + j * gridLengthBackend)", verticesBackend.size());
+#endif
+		verticesBackend[(i + j * gridLengthBackend)].m_Velocity += accel * deltaTime;
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity += verticesBackend[(i + j * gridLengthBackend)].m_Velocity * deltaTime;
 	}
 
-	if (vertices1[(i + j * gridLength) * 4].m_CountVelocity[0]
-		* vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] < 1) {
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] += vertices1[(i + j * gridLength) * 4].m_Velocity[0] * deltaTime;
-	#ifdef ArrayErrorVML0
-			std::cout << "vml0" << std::endl;
-	#endif // ArrayError
-	}
-	if (vertices1[(i + j * gridLength) * 4].m_CountVelocity[1]
-		* vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] < 1) {
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] += vertices1[(i + j * gridLength) * 4].m_Velocity[1] * deltaTime;	
-	#ifdef ArrayErrorVML1
-		std::cout << "vml1" << std::endl;
-	#endif // ArrayError
-	}
+	
 
 	if (
-	#ifdef ArrayErrorVML2
-			std::cout << "vml2" << std::endl &&
-	#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] > sqrtTwoOTwo
-		&& vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] > sqrtTwoOTwo && vertices1[(ip1 + jp1 * gridLength) * 4].m_Mass == 0) {
-	#ifdef ArrayErrorVML2a
-		std::cout << "vml2a" << std::endl;
-	#endif // ArrayError
-		SetVerticesMovement(i, j, 1, 1);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] > sqrtTwoOTwo
+		&& verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] > sqrtTwoOTwo) {
+		if (verticesBackend[(ip1 + jp1 * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, 1, 1);
+		}
+		else {
+			SetVerticesMomentum(i, j, ip1, jp1);
+		}
 	}
 	else if (
-#ifdef ArrayErrorVML3
-		std::cout << "vml3" << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] > sqrtTwoOTwo
-		&& vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] < -sqrtTwoOTwo && vertices1[(ip1 + jm1 * gridLength) * 4].m_Mass == 0) {
-		
-	#ifdef ArrayErrorVML3a
-		std::cout << "vml3a" << std::endl;
-	#endif // ArrayError
-		SetVerticesMovement(i, j, 1, -1);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] > sqrtTwoOTwo
+		&& verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] < -sqrtTwoOTwo) {
+		if (verticesBackend[(ip1 + jm1 * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, 1, -1);
+		}
+		else {
+			SetVerticesMomentum(i, j, ip1, jm1);
+		}
 	}
 	else if (
-#ifdef ArrayErrorVML4
-		std::cout << "vml4" << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] < -sqrtTwoOTwo
-		&& vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] > sqrtTwoOTwo && vertices1[(im1 + jp1 * gridLength) * 4].m_Mass == 0) {
-		
-	#ifdef ArrayErrorVML4a
-			std::cout << "vml4a" << std::endl;
-	#endif // ArrayError
-		SetVerticesMovement(i, j, -1, 1);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] < -sqrtTwoOTwo
+		&& verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] > sqrtTwoOTwo) {
+		if (verticesBackend[(im1 + jp1 * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, -1, 1);
+		}
+		else {
+			SetVerticesMomentum(i, j, im1, jp1);
+		}
 	}
 	else if (
-#ifdef ArrayErrorVML5
-		std::cout << "vml5" << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] < -sqrtTwoOTwo
-		&& vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] < -sqrtTwoOTwo && vertices1[(im1 + jm1 * gridLength) * 4].m_Mass == 0) {
-		
-	#ifdef ArrayErrorVML5a
-			std::cout << "vml5a" << std::endl;
-	#endif // ArrayError
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] < -sqrtTwoOTwo
+		&& verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] < -sqrtTwoOTwo) {
+		if (verticesBackend[(im1 + jm1 * gridLengthBackend)].m_Mass == 0) {
 			SetVerticesMovement(i, j, -1, -1);
+		}
+		else {
+			SetVerticesMomentum(i, j, ip1, jp1);
+		}
 	}
 	else if (
-#ifdef ArrayErrorVML6
-		std::cout << "vml6" << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] < -1 && vertices1[(im1 + j * gridLength) * 4].m_Mass == 0) {
-#ifdef ArrayErrorVML6a
-	std::cout << "vml6a" << std::endl;
-#endif // ArrayError
-SetVerticesMovement(i, j, -1, 0);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] < -1) {
+		if(verticesBackend[(im1 + j * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, -1, 0);
+		}
+		else {
+			SetVerticesMomentum(i, j, im1, j);
+		}
 	}
 	else if (
-#ifdef ArrayErrorVML7
-		std::cout << "vml7" << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[0] > 1 && vertices1[(ip1 + j * gridLength) * 4].m_Mass == 0) {
-		
-#ifdef ArrayErrorVML7a
-	std::cout << "vml7a" << std::endl;
-#endif // ArrayError
-SetVerticesMovement(i, j, 1, 0);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[0] > 1) {
+		if (verticesBackend[(ip1 + j * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, 1, 0);
+		}
+		else {
+			SetVerticesMomentum(i, j, ip1, j);
+		}
 	}
 
 	else if (
-#ifdef ArrayErrorVML8
-		std::cout << "vml8: " << (gridLength - 1 + (gridLength - 1) * gridLength) * 4 << " " << (i + jm1 * gridLength) * 4 << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] < -1 && vertices1[(i + jm1 * gridLength) * 4].m_Mass == 0) {
-		
-#ifdef ArrayErrorVML8a
-	std::cout << "vml8a" << std::endl;
-#endif // ArrayError
-SetVerticesMovement(i, j, 0, -1);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] < -1) {
+		if (verticesBackend[(i + jm1 * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, 0, -1);
+		}
+		else {
+			SetVerticesMomentum(i, j, i, jm1);
+		}
 	}
-	//Vertices1MovementLogic(i, gridLength - 1, i + 1, i - 1, 0, gridLength - 2, deltaTime);
+	//Vertices1MovementLogic(i, gridLengthBackend - 1, i + 1, i - 1, 0, gridLengthBackend - 2, deltaTime);
 	else if (
-#ifdef ArrayErrorVML9
-		std::cout << "vml9: " << (i + jp1 * gridLength) * 4 << std::endl &&
-#endif // ArrayError
-		vertices1[(i + j * gridLength) * 4].m_CountVelocity[1] > 1 && vertices1[(i + jp1 * gridLength) * 4].m_Mass == 0) {
-#ifdef ArrayErrorVML9a
-		std::cout << "vml9a" << std::endl;
-#endif // ArrayError
-		SetVerticesMovement(i, j, 0, 1);
+		verticesBackend[(i + j * gridLengthBackend)].m_CountVelocity[1] > 1) {
+		if (verticesBackend[(i + jp1 * gridLengthBackend)].m_Mass == 0) {
+			SetVerticesMovement(i, j, 0, 1);
+		}
+		else {
+			SetVerticesMomentum(i, j, i, jp1);
+		}
 	}
 }
 
@@ -884,11 +600,11 @@ void SandBox::OnRender()
 	GLCall(glClearColor(0.6f, 0.6f, 0.6f, 1.0f));
 	GLCall(glClear(GL_COLOR_BUFFER_BIT));
 	
-	OnUpdate(0.1f);
-	FollowPlayer();
+	OnUpdate(0.05f);
+	//FollowPlayer();
 
-	m_IndexBuffer = std::make_unique<IndexBuffer>(&index1[0], index1.size());
-	m_VertexBuffer = std::make_unique<VertexBuffer>(&vertices1[0], sizeof(Vertex) * vertices1.size());
+	m_IndexBuffer = std::make_unique<IndexBuffer>(&index[0], index.size());
+	m_VertexBuffer = std::make_unique<VertexBuffer>(&vertices[0], sizeof(Vertex) * vertices.size());
 	m_VAO->AddBuffer(*m_VertexBuffer, *m_Layout);
 
 	{
@@ -898,225 +614,141 @@ void SandBox::OnRender()
 		m_Shader->SetUniformMat4f("u_MVP", mvp);
 		m_Renderer->Draw(*m_VAO, *m_IndexBuffer, *m_Shader);
 	}
-
+#ifdef ImGui_DEBUG
 	SandBox::OnImGuiRender();
+#endif // ImGui_DEBUG
 }
 
 void SandBox::OnImGuiRender() {
+#ifdef ImGui_DEBUG
 	ImGui::Begin("Quad");
 	ImGui::Text("Hi");
-	ImGui::SliderFloat3("Translation A", &m_Translation.x, 0.0f, (float)Window_Width);
+	ImGui::SliderFloat("Well", &well, 0.0f, 400);
+	ImGui::SliderFloat("mDispersion", &mDispersion, 0.0f, 5);
+	ImGui::SliderFloat("Repulse", &repulse, 0.0f, 100);
+	ImGui::SliderFloat2("VelocityCount", &verticesBackend[m_Player[0] + m_Player[1]].m_CountVelocity[0], 0, 100);
+	ImGui::SliderFloat2("Velocity", &verticesBackend[m_Player[0] + m_Player[1]].m_Velocity[0], 0, 100);
 	ImGui::End();
+#endif // ImGui_DEBUG
 }
 
 void SandBox::PlayerMovementW() {
-	if (m_Player[0] + 4 > (gridLength - 1) * 4) {
-		//std::cout << accel.x << " " << accel.y << std::endl;
-		//std::cout << vertices1[m_Player[0] + m_Player[1]].m_CountVelocity.x << " " << vertices1[m_Player[0] + m_Player[1]].m_CountVelocity.y << std::endl;
+	if (m_Player[0] + 1 > (gridLengthBackend - 1)) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 + 4 < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 + 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] - (gridLength) * 4 + 4"
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 + 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - (gridLengthBackend)+1, "m_Player[0] + m_Player[1] - (gridLengthBackend)+1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4 + 4].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] - (gridLengthBackend) + 1].m_Wave += well;
 	}
 	else {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + 4 < 0 || 
-			m_Player[0] + m_Player[1] + 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementA else m_Player[0] + m_Player[1] + 4"
-				<< m_Player[0] + m_Player[1] + 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + 1, "m_Player[0] + m_Player[1] + 1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + 4].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] + 1].m_Wave += well;
 	} 
-	if (m_Player[0] - 4 < 0) {
+	if (m_Player[0] - 1 < 0) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (gridLength * 4) - 4 < 0 ||
-			m_Player[0] + m_Player[1] + (gridLength * 4) - 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] + (gridLength * 4) - 4"
-				<< m_Player[0] + m_Player[1] + (gridLength * 4) - 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (gridLengthBackend)-1, "m_Player[0] + m_Player[1] + (gridLengthBackend)-1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + (gridLength * 4) - 4].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1] + (gridLengthBackend) - 1].m_Wave -= well;
 	}
 	else {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - 4 < 0 || 
-			m_Player[0] + m_Player[1] - 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementA else m_Player[0] + m_Player[1] - 4"
-				<< m_Player[0] + m_Player[1] - 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - 1, "m_Player[0] + m_Player[1] - 1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - 4].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1] - 1].m_Wave -= well;
 	}
 }
 
 void SandBox::PlayerMovementA() {
-	if (m_Player[1] + (2 * gridLength) * 4 > (gridLength - 1) * gridLength * 4) {
-		
+	if (m_Player[1] + (2 * gridLengthBackend) > (gridLengthBackend - 1) * gridLengthBackend) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (2 * gridLength) * 4 - (gridLength - 1) * (gridLength * 4) < 0 || 
-			m_Player[0] + m_Player[1] + (2 * gridLength) * 4 - (gridLength - 1) * (gridLength * 4) > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementA if m_Player[0] + m_Player[1] + (2 * gridLength) * 4 - (gridLength * 4) " 
-				<< m_Player[0] + m_Player[1] + (2 * gridLength) * 4 - (gridLength - 1) * (gridLength * 4) << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (2 * gridLengthBackend) - (gridLengthBackend - 1) * (gridLengthBackend), "m_Player[0] + m_Player[1] + (2 * gridLengthBackend) - (gridLengthBackend - 1) * (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + (2 * gridLength) * 4 - (gridLength - 1) * (gridLength * 4)].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1] + (2 * gridLengthBackend) - (gridLengthBackend - 1) * (gridLengthBackend)].m_Wave -= well;
 	}
 	else 
 	{
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (2 * gridLength) * 4 < 0 || 
-			m_Player[0] + m_Player[1] + (2 * gridLength) * 4 > (gridLength - 1) * gridLength * 4 + gridLength*4) {
-			std::cout << "Error: PlayerMovementA else m_Player[0] + m_Player[1] + (2 * gridLength) * 4" 
-				<< m_Player[0] + m_Player[1] + (2 * gridLength) * 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (2 * gridLengthBackend), "m_Player[0] + m_Player[1] + (2 * gridLengthBackend)", verticesBackend.size());
 #endif
-
-		vertices1[m_Player[0] + m_Player[1] + (2 * gridLength) * 4].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1] + (2 * gridLengthBackend)].m_Wave -= well;
 	}
-	if (m_Player[1] - (gridLength) * 4 < 0) {
-		
+	if (m_Player[1] - (gridLengthBackend)  < 0) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementA if m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) "
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - (gridLengthBackend) + (gridLengthBackend), "m_Player[0] + m_Player[1] - (gridLengthBackend) + (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4)].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] - (gridLengthBackend) + (gridLengthBackend)].m_Wave += well;
 	}
 	else {
-		
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementA else m_Player[0] + m_Player[1] - (gridLength) * 4"
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - (gridLengthBackend), "m_Player[0] + m_Player[1] - (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] - (gridLengthBackend)].m_Wave += well;
 	}
 	
 }
 
 void SandBox::PlayerMovementS() {
-	//vertices1[m_Player[0] + m_Player[1]].CountVelocity[0] -= 0.3;
-	if (m_Player[0] + 8 > (gridLength - 1) * 4) {
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4 + 8].m_Wave -= well;
+	if (m_Player[0] + 2 > (gridLengthBackend - 1)) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 + 8 < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 + 8 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] - (gridLength) * 4 + 8"
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 + 8 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - (gridLengthBackend) + 2, "m_Player[0] + m_Player[1] - (gridLengthBackend) + 2", verticesBackend.size());
 #endif
+		verticesBackend[m_Player[0] + m_Player[1] - (gridLengthBackend) + 2].m_Wave -= well;
 	}
 	else
 	{
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + 8 < 0 ||
-			m_Player[0] + m_Player[1] + 8 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS else m_Player[0] + m_Player[1] + 8"
-				<< m_Player[0] + m_Player[1] + 8 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + 2, "m_Player[0] + m_Player[1] + 2", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + 8].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1] + 2].m_Wave -= well;
 	}
 
-	if (m_Player[0] - 4 < 0) {
+	if (m_Player[0] - 1 < 0) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (gridLength * 4) - 4 < 0 ||
-			m_Player[0] + m_Player[1] + (gridLength * 4) - 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] + (gridLength * 4) - 4"
-				<< m_Player[0] + m_Player[1] + (gridLength * 4) - 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (gridLengthBackend)-1, "m_Player[0] + m_Player[1] + (gridLengthBackend)-1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + (gridLength * 4) - 4].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] + (gridLengthBackend) - 1].m_Wave += well;
 	}
 	else {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - 4 < 0 ||
-			m_Player[0] + m_Player[1] - 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS else m_Player[0] + m_Player[1] - 4"
-				<< m_Player[0] + m_Player[1] - 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - 1, "m_Player[0] + m_Player[1] - 1", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - 4].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] - 1].m_Wave += well;
 	}
-	//vertices1[m_Player[0] + m_Player[1] + 12].m_Wave -= well;
-	//vertices1[m_Player[0] + m_Player[1] - 4].m_Wave += well;
 }
 
 void SandBox::PlayerMovementD() {
 	//vertices1[m_Player[0] + m_Player[1]].CountVelocity[1] += 0.3;
-	if (m_Player[1] - (gridLength) * 4 < 0) {
+	if (m_Player[1] - (gridLengthBackend)  < 0) {
 		//std::cout <<  << std::endl;
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4)"
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4) << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1], "m_Player[0] + m_Player[1]", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4 + (gridLength * 4)].m_Wave -= well;
+		verticesBackend[m_Player[0] + m_Player[1]].m_Wave -= well;
 	}
 	else {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] - (gridLength) * 4 < 0 ||
-			m_Player[0] + m_Player[1] - (gridLength) * 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS else m_Player[0] + m_Player[1] - (gridLength) * 4"
-				<< m_Player[0] + m_Player[1] - (gridLength) * 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] - (gridLengthBackend), "m_Player[0] + m_Player[1] - (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4].m_Wave -= well;
-		//vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4].m_Color = glm::vec4(0, 1, 0, 1);
+		verticesBackend[m_Player[0] + m_Player[1] - (gridLengthBackend)].m_Wave -= well;
 	}
-	//vertices1[m_Player[0] + m_Player[1] - (gridLength) * 4].m_Wave -= well;
-	if (m_Player[1] + (gridLength) * 4 > (gridLength * 4) * (gridLength-1)) {
+	if (m_Player[1] + (gridLengthBackend) > (gridLengthBackend) * (gridLengthBackend-1)) {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (gridLength) * 4 - (gridLength - 1) * (gridLength * 4) < 0 ||
-			m_Player[0] + m_Player[1] + (gridLength) * 4 - (gridLength - 1) * (gridLength * 4) > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS if m_Player[0] + m_Player[1] + (gridLength) * 4 - (gridLength - 1) * (gridLength * 4)"
-				<< m_Player[0] + m_Player[1] + (gridLength) * 4 - (gridLength - 1) * (gridLength * 4) << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (gridLengthBackend)-(gridLengthBackend - 1) * (gridLengthBackend), "m_Player[0] + m_Player[1] + (gridLengthBackend)-(gridLengthBackend - 1) * (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + (gridLength) * 4 - (gridLength - 1) * (gridLength * 4)].m_Wave += well;
+		verticesBackend[m_Player[0] + m_Player[1] + (gridLengthBackend) - (gridLengthBackend - 1) * (gridLengthBackend)].m_Wave += well;
 	}
 	else {
 #ifdef DetectArrayError
-		if (m_Player[0] + m_Player[1] + (gridLength) * 4 < 0 ||
-			m_Player[0] + m_Player[1] + (gridLength) * 4 > (gridLength - 1) * gridLength * 4 + gridLength * 4) {
-			std::cout << "Error: PlayerMovementS else m_Player[0] + m_Player[1] + (gridLength) * 4"
-				<< m_Player[0] + m_Player[1] + (gridLength) * 4 << ", " << vertices1.size() <<
-				std::endl;
-		}
+		Error(m_Player[0] + m_Player[1] + (gridLengthBackend), "m_Player[0] + m_Player[1] + (gridLengthBackend)", verticesBackend.size());
 #endif
-		vertices1[m_Player[0] + m_Player[1] + (gridLength) * 4].m_Wave += well;
-		//vertices1[m_Player[0] + m_Player[1] + (gridLength) * 4].m_Color = glm::vec4(1, 0, 0, 1);
+		verticesBackend[m_Player[0] + m_Player[1] + (gridLengthBackend)].m_Wave += well;
+		//vertices1[m_Player[0] + m_Player[1] + (gridLengthBackend) ].m_Color = glm::vec4(1, 0, 0, 1);
 	}
 	
 }
 
-void SandBox::AddQuad(float x, float y, float mass, glm::vec4 rgba)
+void SandBox::AddQuad(float x, float y, glm::vec4 rgba)
 {
 	/*
 	* TO-DO
@@ -1126,21 +758,25 @@ void SandBox::AddQuad(float x, float y, float mass, glm::vec4 rgba)
 	use vertexCount or a vertex/index reference
 	*/
 	//view index memory in 4 coloums
-	index1.emplace_back(0 + vertexCount);
-	index1.emplace_back(1 + vertexCount);
-	index1.emplace_back(2 + vertexCount);
-	index1.emplace_back(2 + vertexCount);
-	index1.emplace_back(3 + vertexCount);
-	index1.emplace_back(0 + vertexCount);
+	index.emplace_back(0 + vertexCount);
+	index.emplace_back(1 + vertexCount);
+	index.emplace_back(2 + vertexCount);
+	index.emplace_back(2 + vertexCount);
+	index.emplace_back(3 + vertexCount);
+	index.emplace_back(0 + vertexCount);
 
-	vertices1.emplace_back(Vertex(glm::vec2(			  x,			   y), glm::vec4(rgba), mass, mass, glm::vec2(0, 0), glm::vec2(0, 0)));
-	vertices1.emplace_back(Vertex(glm::vec2( sideLength + x,			   y), glm::vec4(rgba), mass, mass, glm::vec2(0, 0), glm::vec2(0, 0)));
-	vertices1.emplace_back(Vertex(glm::vec2( sideLength + x,  sideLength + y), glm::vec4(rgba), mass, mass, glm::vec2(0, 0), glm::vec2(0, 0)));
-	vertices1.emplace_back(Vertex(glm::vec2(			  x,  sideLength + y), glm::vec4(rgba), mass, mass, glm::vec2(0, 0), glm::vec2(0, 0)));
+	vertices.emplace_back(Vertex(glm::vec2(			  x,			   y), glm::vec4(rgba)));
+	vertices.emplace_back(Vertex(glm::vec2( sideLength + x,			   y), glm::vec4(rgba)));
+	vertices.emplace_back(Vertex(glm::vec2( sideLength + x,  sideLength + y), glm::vec4(rgba)));
+	vertices.emplace_back(Vertex(glm::vec2(			  x,  sideLength + y), glm::vec4(rgba)));
 
 	vertexCount += 4;
 }
 
+void SandBox::AddQuadBackend(float mass, glm::vec4 rgba) 
+{
+	verticesBackend.emplace_back(VertexBackend(glm::vec4(rgba), mass, mass, glm::vec2(0, 0), glm::vec2(0, 0)));
+}
 
 void SandBox::SetRenderer(Renderer* m_Renderer) {
 	m_Renderer = m_Renderer;
@@ -1152,7 +788,27 @@ void SandBox::SetTranslation(glm::vec3 m_Translate) {
 
 void SandBox::FollowPlayer() {
 	//vertices1[m_Player[0] + m_Player[1]].m_Position
-	m_Translation += (glm::vec3(-vertices1[m_Player[0] + m_Player[1]].m_Position.x + Window_Width * 0.5, -vertices1[m_Player[0] + m_Player[1]].m_Position.y + Window_Height * 0.5, 0)
-		- m_Translation) * glm::vec3(0.02, 0.02, 0.02);
+	//m_Translation += (glm::vec3(-vertices1[m_Player[0] + m_Player[1]].m_Position.x + Window_Width * 0.5, -vertices1[m_Player[0] + m_Player[1]].m_Position.y + Window_Height * 0.5, 0)
+	//	- m_Translation) * glm::vec3(0.02, 0.02, 0.02);
 	//m_Translation = glm::vec3(-vertices1[m_Player[0] + m_Player[1]].m_Position.x + Window_Width* 0.5, -vertices1[m_Player[0] + m_Player[1]].m_Position.y + Window_Height * 0.5, 0);
+	//m_Translation += glm::vec3(-(m_Player[1]/gridLengthBackend* sideLength - 500), -(m_Player[0] * sideLength-500), 0);
+	m_Player_Cam += glm::vec2(m_Translation[1], m_Translation[0]) * glm::vec2(0.1);
+	m_Translation = (glm::vec3((m_Player[1] / gridLengthBackend - m_Player_Cam[1]) * sideLength
+		, (m_Player[0] - m_Player_Cam[0]) * sideLength, 0));
+	//m_Translation += glm::vec3(-vertices[m_Player[0] + m_Player[1]].m_Position.x + Window_Width * 0.5
+	//	, -vertices[m_Player[0] + m_Player[1]].m_Position.y + Window_Height * 0.5, 0);
+	//std::cout << m_Player[0] << " " << m_Player[1] << " " << m_Translation.x << " " << m_Translation.y << " " << vertices[m_Player[0] + m_Player[1]].m_Position.x << " " << vertices[m_Player[0] + m_Player[1]].m_Position.y << std::endl;
+	std::cout << m_Player_Cam[0] << " " << m_Player_Cam[1] << " " << m_Translation.x << " " << m_Translation.y << std::endl;
+}
+
+void SandBox::Error(int a, const char b[], int size) {
+#ifdef DetectArrayError
+	if (a < 0 ||
+		a > size){
+		std::cout << "Error: " << b << " "
+			<< a << " " 
+			<< size
+			<< std::endl;
+	}
+#endif
 }

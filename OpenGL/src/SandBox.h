@@ -13,6 +13,7 @@
 
 #include "Log.h"
 #include "Renderer.h"
+//#include "ShaderSource.h" // This is where the shader source code is stored
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -24,69 +25,51 @@
 struct Vertex
 {
 	glm::vec2 m_Position;
-
 	glm::vec4 m_Color;
-	float m_Mass;
-	float m_Wave;
-	glm::vec2 m_Velocity;
-	glm::vec2 m_CountVelocity;
-	//glm::vec3 m_Weight0;
-	//glm::vec3 m_Weight1;
-	//glm::vec3 m_Weight2;
-	//glm::vec2 m_TexCoord;
-	//unsigned int m_TexIndex;
 
-	static constexpr unsigned int getcount() {return 6+2+4; }
+	static constexpr unsigned int getcount() {return 6; }
 
-	Vertex(glm::vec2 m_Position, glm::vec4 m_Color, float m_Mass, float m_Wave, glm::vec2 m_Velocity, glm ::vec2 m_CountVelocity)
-		: m_Position(m_Position), m_Color(m_Color), m_Mass(m_Mass), m_Wave(m_Wave), m_Velocity(m_Velocity), m_CountVelocity(m_CountVelocity)
+	Vertex(glm::vec2 m_Position, glm::vec4 m_Color)
+		: m_Position(m_Position), m_Color(m_Color)
 	{
 	}
 	//~Vertex();
 };
 
-//struct VertexBackend 
-//{
-//	glm::vec2 m_Position;
-//
-//	glm::vec4 m_Color;
-//	float m_Mass;
-//	float m_Wave;
-//	glm::vec2 m_Velocity;
-//	glm::vec2 m_CountVelocity;
-//	//glm::vec3 m_Weight0;
-//	//glm::vec3 m_Weight1;
-//	//glm::vec3 m_Weight2;
-//	//glm::vec2 m_TexCoord;
-//	//unsigned int m_TexIndex;
-//
-//	static constexpr unsigned int getcount() { return 6 + 2 + 4; }
-//
-//	Vertex(glm::vec2 m_Position, glm::vec4 m_Color, float m_Mass, float m_Wave, glm::vec2 m_Velocity, glm::vec2 m_CountVelocity)
-//		: m_Position(m_Position), m_Color(m_Color), m_Mass(m_Mass), m_Wave(m_Wave), m_Velocity(m_Velocity), m_CountVelocity(m_CountVelocity)
-//	{
-//	}
-//	//~Vertex();
-//};
+struct VertexBackend 
+{
+	glm::vec4 m_Color;
+	float m_Mass;
+	float m_Wave;
+	glm::vec2 m_Velocity;
+	glm::vec2 m_CountVelocity;
+
+	static constexpr unsigned int getcount() { return 4 + 2 + 4; }
+
+	VertexBackend(glm::vec4 m_Color, float m_Mass, float m_Wave, glm::vec2 m_Velocity, glm::vec2 m_CountVelocity)
+		: m_Color(m_Color), m_Mass(m_Mass), m_Wave(m_Wave), m_Velocity(m_Velocity), m_CountVelocity(m_CountVelocity)
+	{
+	}
+	//~Vertex();
+};
 
 class SandBox
 {
 public:
 	float dispersion = 0.105;
-	float mDispersion = 0.3;
-	float repulse = 1.01;
+	float mDispersion = 1;
+	float repulse = 1.5;
 	float sqrtTwoOTwo = 0.70710678118;
-	float gap = 1.0f;
-	float accelDamp = 0.1f;
-	float well = 5.0f;
+	float accelDamp = 1;
+	float well = 10.0f;
 	float intensity = 1;
 	glm::vec2 accel;
 
-	const int gridLength = 100;
-	float sideLength = 4.0f ; // 10.0f is the width and height of the square
-	unsigned int tileSetSL[100]; //same as gridLength
-	unsigned int tileSetNL[100];	//same as gridLength
-	Vertex* vertMat[100][100];
+	const int gridLength = 151; //odd number
+	const int gridLengthBackend = 500;
+	float sideLength = 5.0f ; // 10.0f is the width and height of the square
+	float gap = 0; // 1.0f is the gap between the squares
+	//VertexBackend* vertMat[100][100];
 
 	SandBox();
 	~SandBox();
@@ -95,8 +78,10 @@ public:
 	void OnRender();
 
 	void OnImGuiRender();
-	void AddQuad(float x, float y, float mass, glm::vec4(rgba));
-	void SetVerticesMovement(int i, int j, int ioffset, int joffset);
+	void AddQuad(float x, float y, glm::vec4 rgba);
+	void AddQuadBackend(float mass, glm::vec4 rgba);
+	void SetVerticesMovement(int& i, int& j, int ioffset, int joffset);
+	void SetVerticesMomentum(int& i, int& j, int i1, int j1);
 	void Vertices1MovementLogic(int i, int j, int ip1, int im1, int jp1, int jm1, float deltaTime);
 
 	void SetRenderer(Renderer* m_Renderer);
@@ -108,13 +93,16 @@ public:
 	void PlayerMovementS();
 	void PlayerMovementD();
 
+	void Error(int a, const char b[], int size);
+
 
 	//unsigned int vertexCount;
 	//Vertex vertices[4];
-	std::vector<Vertex> vertices1;
+	std::vector<VertexBackend> verticesBackend;
+	std::vector<Vertex> vertices;
 	//std::vector<unsigned int> index;
 	//unsigned int index[12] = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
-	std::vector<unsigned int> index1;// = { {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4} };
+	std::vector<unsigned int> index;// = { {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4} };
 
 	int vertexCount;
 
@@ -129,5 +117,6 @@ private:
 	glm::mat4 m_Proj, m_View;
 	glm::vec3 m_Translation;
 	glm::vec2 m_Player;
+	glm::vec2 m_Player_Cam;
 	
 };
