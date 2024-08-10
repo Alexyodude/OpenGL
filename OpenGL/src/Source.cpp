@@ -1,151 +1,135 @@
-//#define ImGui_DEBUG_TestTexture
-#define ImGui_DEBUG
-#define KEY_DEBUG
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-
-#include "Log.h"
-#include "Renderer.h"
-
+#include <vector>
+#include <memory>
 #include "Shader.h"
-#include "VertexBufferLayout.h"
-#include "VertexArray.h"
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "Texture.h"
+#include <chrono>
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
+const int width = 1000;
+const int height = 1000;
+const int gridWidth = 1000;
+const int gridHeight = 1000;
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_opengl3.h"
+GLuint createTexture(int width, int height, const void* data) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    return texture;
+}
 
-#include "tests/TestClearColor.h"
-#include "tests/TestTexture2D.h"
+void checkFramebufferStatus() {
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer not complete: " << status << std::endl;
+    }
+}
 
-#include "Layer.h"
+int main() {
+    if (!glfwInit()) return -1;
 
-#include "EventListener.h"
-
-int main(void)
-{
-    GLFWwindow* window;
-
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(Window_Width, Window_Height, "Hello Wurld", NULL, NULL);
-    if (!window)
-    {
+    GLFWwindow* window = glfwCreateWindow(width, height, "Game of Life", NULL, NULL);
+    if (!window) {
         glfwTerminate();
         return -1;
     }
-
-    /* Make the window's context current */
     glfwMakeContextCurrent(window);
+    glewInit();
 
-    if (glewInit() != GLEW_OK) {
-        std::cout << "Error!" << std::endl;
+    // Create shader program
+    std::unique_ptr<Shader> program = std::make_unique<Shader>("res/shaders/vertex.shader", "res/shaders/fragment.shader");
+    program->Bind();
+
+    // Initialize grid with random state
+    std::vector<float> initialState(gridWidth * gridHeight, 0.0f);
+    for (int i = 0; i < gridWidth * gridHeight; ++i) {
+        initialState[i] = (rand() % 5 == 0) ? 1.0f : 0.0f;
     }
-    glfwSwapInterval(1);
 
-    std::cout << glGetString(GL_VERSION) << std::endl;
+    // Create textures
+    GLuint textures[2];
+    textures[0] = createTexture(gridWidth, gridHeight, initialState.data());
+    textures[1] = createTexture(gridWidth, gridHeight, nullptr);
 
-    //glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    // Create FBO
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures[0], 0);
+    checkFramebufferStatus();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glfwSetCursorPosCallback(window, Cursor_Pos_Callback);
-    glfwSetKeyCallback(window, Key_Callback);
-    glfwSetWindowSizeCallback(window, Window_Size_Callback);
+    // Create VAO and VBO for quad
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    float quadVertices[] = {
+        -1.0f,  1.0f,
+        -1.0f, -1.0f,
+         1.0f, -1.0f,
+        -1.0f,  1.0f,
+         1.0f, -1.0f,
+         1.0f,  1.0f,
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
-    {
-        GLCall(glEnable(GL_BLEND));
-		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-        
-        //Renderer renderer;
+    // Set uniforms
+    program->Bind();
+    program->SetUniform1i("u_Texture", 0);
+    program->SetUniform2f("u_Resolution", gridWidth, gridHeight);
 
-        #ifdef ImGui_DEBUG
-            ImGui::CreateContext();
-            ImGui_ImplGlfw_InitForOpenGL(window, true);
-            ImGui_ImplOpenGL3_Init("#version 330");
-            ImGui::StyleColorsDark();
-        #endif
-        #ifdef ImGui_DEBUG_TestTexture
-            test::Test* currentTest = nullptr;
-            test::TestMenu* testMenu = new test::TestMenu(currentTest);
-            currentTest = testMenu;
+    int currentTextureIndex = 0;
 
-            testMenu->RegisterTest<test::TestClearColor>("Clear Color");
-            testMenu->RegisterTest<test::TestTexture2D>("Texture 2D");
-        #endif
-        std::unique_ptr <Texture> T1 = std::make_unique<Texture>("res/textures/test.jpg");
-        std::unique_ptr <Texture> T2 = std::make_unique<Texture>("res/textures/earth.jpg");
-        std::unique_ptr <Layer> layer = std::make_unique<Layer>();
-        T1->Bind(1);
-        T2->Bind(2);
+    auto lastTime = std::chrono::high_resolution_clock::now();
+    int frameCount = 0;
+    while (!glfwWindowShouldClose(window)) {
+        float milliseconds = 0.0f;
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> elapsedTime = currentTime - lastTime;
+        milliseconds += elapsedTime.count() * 1000.0f;
+        frameCount++;
 
-        /* Loop until the user closes the window */
-        while (!glfwWindowShouldClose(window))
-        {  
-            #ifdef ImGui_DEBUG
-                ImGui_ImplOpenGL3_NewFrame();
-                ImGui_ImplGlfw_NewFrame();
-                ImGui::NewFrame();
-            #endif
-           // std::unique_ptr<SandBox> sandBox = std::make_unique<SandBox>(&renderer);
-            //sandBox->SetRenderer(&renderer);
-            //sandBox->AddQuad(10+sandBox->index1.size(), 10, 2);
-            layer->OnRender();
-            layer->OnEvent(KEY);
-
-            #ifdef ImGui_DEBUG_TestTexture
-                if (currentTest) 
-                {
-                    currentTest->OnUpdate(0.0f); //Updates the test
-                    currentTest->OnRender(); //Renders the test
-
-                    ImGui::Begin("Test"); //Begins the test ui window
-                    if (currentTest != testMenu) //If the current test is not the test menu
-                        if (ImGui::Button("<-")) //If the button is pressed
-                        {
-                            delete currentTest; //Deletes the current test
-                            currentTest = testMenu; //Sets the current test to the test menu
-                        }
-
-                    currentTest->OnImGuiRender(); //Renders the test ui slider, button, etc.
-
-                    ImGui::End(); //Ends the test ui window
-                }
-            #endif
-            #ifdef ImGui_DEBUG
-                ImGui::Render();
-                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-            #endif
-            /* Swap front and back buffers */
-            glfwSwapBuffers(window);
-
-            /* Poll for and process events */
-            glfwPollEvents();
+        if (milliseconds >= 1000.0f) {
+            float fps = frameCount / (milliseconds / 1000.0f);
+            std::string title = "Game of Life - FPS: " + std::to_string(fps) + " - " + std::to_string(milliseconds / frameCount) + " ms/frame";
+            glfwSetWindowTitle(window, title.c_str());
+            frameCount = 0;
+            milliseconds = 0.0f;
+            lastTime = currentTime;
         }
-        #ifdef ImGui_DEBUG_TestTexture
-        delete currentTest; //Deletes the current test
-        if (currentTest != testMenu) //If the current test is not the test menu
-			delete testMenu; //Deletes the test menu
-        #endif
+
+        // Render to FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures[(currentTextureIndex + 1) % 2], 0);
+        glViewport(0, 0, gridWidth, gridHeight);
+        //glClear(GL_COLOR_BUFFER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures[currentTextureIndex]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Swap textures
+        currentTextureIndex = (currentTextureIndex + 1) % 2;
+
+        // Render to screen
+        glViewport(0, 0, width, height);
+        //glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindTexture(GL_TEXTURE_2D, textures[currentTextureIndex]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
-    #ifdef ImGui_DEBUG
-        ImGui_ImplOpenGL3_Shutdown(); 
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-    #endif
 
     glfwDestroyWindow(window);
     glfwTerminate();
