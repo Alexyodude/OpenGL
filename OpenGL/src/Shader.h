@@ -14,9 +14,11 @@ private:
     std::string m_FilePath;
     unsigned int m_RendererID;
     mutable std::unordered_map<std::string, int> m_UniformLocationCache;
+
 public:
     Shader(const std::string& filepath);
-    Shader(const std::string& vertexSource, const std::string& fragmentSource); // New constructor
+    Shader(const std::string& vertexSource, const std::string& fragmentSource); // Constructor for vertex and fragment shaders
+    Shader(const std::string& filepath, unsigned int shaderType); // New constructor for a single shader (e.g., fragment or compute)
     ~Shader();
 
     void Bind() const;
@@ -36,5 +38,6 @@ private:
     std::string ReadFileContents(const std::string& filepath);
     unsigned int CompileShader(unsigned int type, const std::string& source);
     unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
+    unsigned int CreateSingleShader(const std::string& shaderSource, unsigned int shaderType); // New method
     int GetUniformLocation(const std::string& name);
 };

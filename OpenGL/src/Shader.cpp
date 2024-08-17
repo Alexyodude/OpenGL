@@ -19,6 +19,12 @@ Shader::Shader(const std::string& vertexFilePath, const std::string& fragmentFil
     m_RendererID = CreateShader(vertexSource, fragmentSource);
 }
 
+Shader::Shader(const std::string& filepath, unsigned int shaderType)
+    : m_FilePath(filepath), m_RendererID(0) {
+    std::string shaderSource = ReadFileContents(filepath);
+    m_RendererID = CreateSingleShader(shaderSource, shaderType);
+}
+
 Shader::~Shader() {
     GLCall(glDeleteProgram(m_RendererID));
 }
@@ -154,6 +160,19 @@ unsigned int Shader::CreateShader(const std::string& vertexShader, const std::st
 
     GLCall(glDeleteShader(vs));
     GLCall(glDeleteShader(fs));
+
+    return program;
+}
+
+unsigned int Shader::CreateSingleShader(const std::string& shaderSource, unsigned int shaderType) {
+    unsigned int program = glCreateProgram();
+    unsigned int shader = CompileShader(shaderType, shaderSource);
+
+    GLCall(glAttachShader(program, shader));
+    GLCall(glLinkProgram(program));
+    GLCall(glValidateProgram(program));
+
+    GLCall(glDeleteShader(shader));
 
     return program;
 }

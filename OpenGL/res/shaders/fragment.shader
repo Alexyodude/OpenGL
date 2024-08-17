@@ -1,32 +1,32 @@
-#version 330 core
-out float FragColor;
-in vec2 TexCoords;
+#version 430 core
 
-uniform sampler2D u_Texture;
-uniform vec2 u_Resolution;
+out vec4 FragColor;
 
-float getCellvalue(int x, int y) {
-    return texture(u_Texture, (vec2(x, y) + 0.5) / u_Resolution).r;
-}
+layout(std430, binding = 0) buffer InputCells {
+    float iMass[]; // Array of floats
+    float i2[];          // Array of ints
+};
+
+layout(std430, binding = 1) buffer OutputCells {
+    float oMass[]; // Array of floats
+    float o2[];            // Array of ints
+};
+
+int gridWidth = 1000;
+int gridHeight = 1000;
+const float divide = 0.01f;
 
 void main() {
-    ivec2 coords = ivec2(TexCoords * u_Resolution);
+    ivec2 coords = ivec2(gl_FragCoord.xy);
 
-    int aliveNeighbors = int(getCellvalue(coords.x - 1, coords.y - 1)) +
-						int(getCellvalue(coords.x, coords.y - 1)) +
-						int(getCellvalue(coords.x + 1, coords.y - 1)) +
-						int(getCellvalue(coords.x - 1, coords.y)) +
-						int(getCellvalue(coords.x + 1, coords.y)) +
-						int(getCellvalue(coords.x - 1, coords.y + 1)) +
-						int(getCellvalue(coords.x, coords.y + 1)) +
-						int(getCellvalue(coords.x + 1, coords.y + 1));
+    int index = coords.y * gridWidth + coords.x;
 
-    float currentState = getCellvalue(coords.x, coords.y);
-    if (currentState == 1.0 && (aliveNeighbors < 2 || aliveNeighbors > 3)) {
-        FragColor = 0.0;
-    } else if (currentState == 0.0 && aliveNeighbors == 3) {
-        FragColor = 1.0;
-    } else {
-        FragColor = currentState;
-    }
+    // Perform the operations
+    oMass[index] = iMass[index];
+
+    //o2[index] = (i2[index + 1] + i2[index - 1] + i2[index + gridWidth] + i2[index - gridWidth]) * divide + iMass[index];
+    o2[index] = i2[index-1];
+
+    // Use output to generate a color
+    FragColor = vec4(0, 0, o2[index], 1); // Assuming o2 is in the range [0, 255]
 }
