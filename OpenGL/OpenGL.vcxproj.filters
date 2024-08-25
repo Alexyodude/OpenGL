@@ -478,6 +478,7 @@
     <None Include="res\shaders\Render.shader" />
     <None Include="res\shaders\conwayfragment.shader" />
     <None Include="res\shaders\compute.shader" />
+    <None Include="res\shaders\compute2.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Shader.h">

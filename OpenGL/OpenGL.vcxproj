@@ -166,6 +166,7 @@
     <None Include="Dependices\glew-2.1.0\doc\wglew.html" />
     <None Include="res\shaders\Basic.shader" />
     <None Include="res\shaders\compute.shader" />
+    <None Include="res\shaders\compute2.shader" />
     <None Include="res\shaders\conwayfragment.shader" />
     <None Include="res\shaders\Render.shader" />
     <None Include="src\vendor\glm\detail\func_common.inl" />
