@@ -21,7 +21,7 @@ layout(std430, binding = 1) buffer OutputCells {
 
 const int gridWidth = 1000;
 const int gridHeight = 1000;
-const float divide = 0.11f;
+//const float divide = 0.11f;
 
 int wrapIndex(int index, int maxIndex) {
     return (index + maxIndex) % maxIndex;

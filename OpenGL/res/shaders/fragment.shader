@@ -37,6 +37,6 @@ void main() {
     float color2 = oCells[index].state2;
     float color3 = oCells[index].repulse;
     //float colorNorm = (color1 + color2);
-    FragColor = vec4(color2, 0, color3, alpha); // Output as grayscale
+    FragColor = vec4(color2*0.2, 0, color3*0.2, alpha); // Output as grayscale
     //FragColor = vec4(iMass[index], i2[index], 0.0, 1.0);
 }

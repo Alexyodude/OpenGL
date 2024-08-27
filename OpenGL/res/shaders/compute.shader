@@ -9,24 +9,20 @@ struct Cell {
     float repulse;
     float state2;
     float test1;
-    //float test2;
-    //float test3;
-    //float test4;
-    //vec2 test;
 };
 
 layout(std430, binding = 0) buffer InputCells {
-    Cell iCells[]; // Array of input cells
+    Cell iCells[];
 };
 
 layout(std430, binding = 1) buffer OutputCells {
-    Cell oCells[]; // Array of output cells
+    Cell oCells[];
 };
 
 const int gridWidth = 1000;
 const int gridHeight = 1000;
-const float divide = 0.11f;
-const float divideRepulse = 0.08f;
+const float divide = 0.12f;
+const float divideRepulse = 0.07f;
 
 int wrapIndex(int index, int maxIndex) {
     return (index + maxIndex) % maxIndex;
@@ -53,28 +49,47 @@ void main() {
     int downLeftIndex = down * gridWidth + left;
     int downRightIndex = down * gridWidth + right;
 
-    float indexCondition = (1-step(0, -iCells[index].mass));
+    // Precompute and store commonly used values in local variables
+    Cell centerCell = iCells[index];
+    vec2 velocity = centerCell.velocity;
+    float mass = centerCell.mass;
 
-    oCells[index].velocity = (vec2(
-        iCells[rightIndex].state2 - iCells[leftIndex].state2 
-        - iCells[rightIndex].repulse + iCells[leftIndex].repulse
-        + (iCells[upRightIndex].state2 + iCells[downRightIndex].state2 - iCells[upLeftIndex].state2 - iCells[downLeftIndex].state2
-        - iCells[upRightIndex].repulse - iCells[downRightIndex].repulse + iCells[upLeftIndex].repulse + iCells[downLeftIndex].repulse) * 0.5
-        , 
-        iCells[upIndex].state2 - iCells[downIndex].state2
-        - iCells[upIndex].repulse + iCells[downIndex].repulse
-        + (iCells[upLeftIndex].state2 + iCells[upRightIndex].state2 - iCells[downLeftIndex].state2 - iCells[downRightIndex].state2
-        - iCells[upLeftIndex].repulse - iCells[upRightIndex].repulse + iCells[downLeftIndex].repulse + iCells[downRightIndex].repulse) * 0.5)
-        
-        + iCells[index].velocity*0.99) * indexCondition;
+    // Load neighboring cells only once
+    Cell leftCell = iCells[leftIndex];
+    Cell rightCell = iCells[rightIndex];
+    Cell upCell = iCells[upIndex];
+    Cell downCell = iCells[downIndex];
+    Cell upLeftCell = iCells[upLeftIndex];
+    Cell upRightCell = iCells[upRightIndex];
+    Cell downLeftCell = iCells[downLeftIndex];
+    Cell downRightCell = iCells[downRightIndex];
 
-    // Perform the operations using the wrapped indices
-    oCells[index].state2 = (iCells[upLeftIndex].state2 + iCells[upRightIndex].state2 + iCells[downLeftIndex].state2 + iCells[downRightIndex].state2 +
-        iCells[upIndex].state2 + iCells[downIndex].state2 + iCells[leftIndex].state2 + iCells[rightIndex].state2)*divide + iCells[index].mass;
-    oCells[index].repulse = (iCells[upLeftIndex].repulse + iCells[upRightIndex].repulse + iCells[downLeftIndex].repulse + iCells[downRightIndex].repulse +
-        iCells[upIndex].repulse + iCells[downIndex].repulse + iCells[leftIndex].repulse + iCells[rightIndex].repulse)*divideRepulse + 1.3 * iCells[index].mass;
+    // Compute differences between neighboring states and repulses
+    vec2 stateDiff = vec2(rightCell.state2 - leftCell.state2, upCell.state2 - downCell.state2);
+    vec2 repulseDiff = vec2(rightCell.repulse - leftCell.repulse, upCell.repulse - downCell.repulse);
 
-    oCells[index].movement = iCells[index].movement;
-    oCells[index].mass = iCells[index].mass;
-    //oCells[index].mass = iCells[index].mass;
+    vec2 diagonalStateRepulse = vec2(
+        (upRightCell.state2 - upLeftCell.state2 + downRightCell.state2 - downLeftCell.state2) * 0.5,
+        (upLeftCell.repulse - downRightCell.repulse + upRightCell.repulse - downLeftCell.repulse) * 0.5
+    );
+
+    float indexCondition = (1.0 - step(0.0, -mass));
+
+    // Calculate new velocity
+    oCells[index].velocity = (stateDiff - repulseDiff + diagonalStateRepulse + velocity) * indexCondition;
+
+    // Compute mass sums
+    float massSum = upLeftCell.state2 + upRightCell.state2 + downLeftCell.state2 + downRightCell.state2
+                  + upCell.state2 + downCell.state2 + leftCell.state2 + rightCell.state2;
+
+    float repulseSum = upLeftCell.repulse + upRightCell.repulse + downLeftCell.repulse + downRightCell.repulse
+                     + upCell.repulse + downCell.repulse + leftCell.repulse + rightCell.repulse;
+
+    // Update cell state and repulse
+    oCells[index].state2 = massSum * divide + mass;
+    oCells[index].repulse = repulseSum * divideRepulse + 1.5 * mass;
+
+    // Copy other values directly
+    oCells[index].movement = centerCell.movement;
+    oCells[index].mass = mass;
 }
