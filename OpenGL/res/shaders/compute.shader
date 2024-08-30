@@ -81,13 +81,15 @@ void main() {
     // Compute mass sums
     float massSum = upLeftCell.state2 + upRightCell.state2 + downLeftCell.state2 + downRightCell.state2
                   + upCell.state2 + downCell.state2 + leftCell.state2 + rightCell.state2;
+    
+    //float massSum = upCell.state2 + downCell.state2 + leftCell.state2 + rightCell.state2;
 
     float repulseSum = upLeftCell.repulse + upRightCell.repulse + downLeftCell.repulse + downRightCell.repulse
                      + upCell.repulse + downCell.repulse + leftCell.repulse + rightCell.repulse;
 
     // Update cell state and repulse
     oCells[index].state2 = massSum * divide + mass;
-    oCells[index].repulse = repulseSum * divideRepulse + 1.5 * mass;
+    oCells[index].repulse = repulseSum * divideRepulse + 2.0 * mass;
 
     // Copy other values directly
     oCells[index].movement = centerCell.movement;
