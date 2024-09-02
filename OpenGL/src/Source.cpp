@@ -14,14 +14,15 @@ const int gridWidth = 1000;
 const int gridHeight = 1000;
 
 struct Cell {
-    glm::vec2 velocity;
-    glm::vec2 movement;
-    float mass;
-    float repulse;
-    float state2;
-    float test1;
-    //glm::vec2 test;
-    
+    glm::vec2 velocity;//2
+    glm::vec2 movement;//4
+    glm::mat4 gravity;//13
+    //glm::vec4 b;
+    //glm::vec4 a;
+    float a;
+    float mass;//14
+    float repulse;//15
+    float extra;//16
 };
 
 int main() {
@@ -49,11 +50,13 @@ int main() {
     std::vector<Cell> grid1(gridWidth * gridHeight);
     std::vector<Cell> grid2(gridWidth * gridHeight);
 
-    
-
     for (int i = 0; i < gridWidth * gridHeight; i++) {
-        grid1[i].mass = (rand() % 20 == 0) ? 0.3f : 0.0f;
-        grid1[i].state2 = grid1[i].mass;
+        grid1[i].mass = (rand() % 1000 == 0) ? 1.0f : 0.0f;
+        
+        grid1[i].gravity = glm::mat3(
+              { grid1[i].mass * 0.125 , grid1[i].mass * 0.125   , grid1[i].mass * 0.125 }
+            , { grid1[i].mass * 0.125 , grid1[i].mass           , grid1[i].mass * 0.125 }
+            , { grid1[i].mass * 0.125 , grid1[i].mass * 0.125   , grid1[i].mass * 0.125 });
         grid1[i].velocity = glm::vec2((rand() % 500 - 250) * 0.01, (rand() % 500 - 250) * 0.01);
         //grid1[i].velocity = glm::vec2(0.0f);
         grid1[i].movement = glm::vec2(0.0f);
@@ -124,7 +127,9 @@ int main() {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         // 4. Swap SSBO indices for next frame
-        //currentSSBOIndex = (currentSSBOIndex + 1) % 2;
+#ifndef _compute2
+        currentSSBOIndex = (currentSSBOIndex + 1) % 2;
+#endif // _compute2
 
         glfwSwapBuffers(window);
         glfwPollEvents();
