@@ -3,12 +3,8 @@
 layout(local_size_x = 25, local_size_y = 25) in;
 
 struct Cell {
-    vec2 velocity;
-    vec2 movement;
-    float mass;
-    float repulse;
-    float state2;
-    float test1;
+    float tempature;
+    float alpha;
 };
 
 layout(std430, binding = 0) buffer InputCells {
@@ -21,7 +17,6 @@ layout(std430, binding = 1) buffer OutputCells {
 
 const int gridWidth = 1000;
 const int gridHeight = 1000;
-//const float divide = 0.11f;
 
 int wrapIndex(int index, int maxIndex) {
     return (index + maxIndex) % maxIndex;
@@ -49,64 +44,5 @@ void main() {
     int downLeftIndex = down * gridWidth + left;
     int downRightIndex = down * gridWidth + right;
 
-    float upLeftCondition = step(1, iCells[upLeftIndex].movement.x)*step(1, -iCells[upLeftIndex].movement.y);
-    float upCondition = (1-step(1, iCells[upIndex].movement.x*iCells[upIndex].movement.x))*step(1, -iCells[upIndex].movement.y);
-    float upRightCondition = step(1, -iCells[upRightIndex].movement.x)*step(1, -iCells[upRightIndex].movement.y);
-    float leftCondition = step(1, iCells[leftIndex].movement.x)*(1-step(1, iCells[leftIndex].movement.y*iCells[leftIndex].movement.y));
-    float rightCondition = step(1, -iCells[rightIndex].movement.x)*(1-step(1, iCells[rightIndex].movement.y*iCells[rightIndex].movement.y));
-    float downLeftCondition = step(1, iCells[downLeftIndex].movement.x)*step(1, iCells[downLeftIndex].movement.y);
-    float downCondition = (1-step(1, iCells[downIndex].movement.x*iCells[downIndex].movement.x))*step(1, iCells[downIndex].movement.y);
-    float downRightCondition = step(1, -iCells[downRightIndex].movement.x)*step(1, iCells[downRightIndex].movement.y);
-
-    float indexCondition = (1-step(1, iCells[index].movement.x*iCells[index].movement.x))*(1-step(1, iCells[index].movement.y*iCells[index].movement.y));
-
-
-    //oCells[index].movement = (iCells[index].movement + iCells.velocity * 0.01)*indexCondition;
-    //oCells.velocity = iCells.velocity * indexCondition;
-    //oCells.mass = iCells.mass * indexCondition;
-
-    
-    float mass = iCells[upLeftIndex].mass*upLeftCondition
-             + iCells[upIndex].mass*upCondition
-             + iCells[upRightIndex].mass*upRightCondition
-             + iCells[leftIndex].mass*leftCondition
-             + iCells[index].mass*indexCondition
-             + iCells[rightIndex].mass*rightCondition
-		     + iCells[downLeftIndex].mass*downLeftCondition
-             + iCells[downIndex].mass*downCondition
-             + iCells[downRightIndex].mass*downRightCondition;
-
-    float massNull = step(0,-mass)*0.0001;
-
-    // Calculate the new state of the cell
-    
-    vec2 velocity = (
-                               iCells[upLeftIndex].velocity*iCells[upLeftIndex].mass * upLeftCondition
-                             + iCells[upIndex].velocity*iCells[upIndex].mass * upCondition
-                             + iCells[upRightIndex].velocity*iCells[upRightIndex].mass * upRightCondition
-                             + iCells[leftIndex].velocity*iCells[leftIndex].mass * leftCondition
-                             + iCells[index].velocity*iCells[index].mass * indexCondition
-                             + iCells[rightIndex].velocity*iCells[rightIndex].mass * rightCondition
-                             + iCells[downLeftIndex].velocity*iCells[downLeftIndex].mass * downLeftCondition
-                             + iCells[downIndex].velocity*iCells[downIndex].mass  * downCondition
-                             + iCells[downRightIndex].velocity*iCells[downRightIndex].mass * downRightCondition
-                             )/(mass+massNull);
-    oCells[index].movement = (
-                               (iCells[upLeftIndex].movement+vec2(-1,1))*iCells[upLeftIndex].mass * upLeftCondition
-                             + (iCells[upIndex].movement+vec2(0,1))*iCells[upIndex].mass * upCondition
-                             + (iCells[upRightIndex].movement+vec2(1,1))*iCells[upRightIndex].mass * upRightCondition
-                             + (iCells[leftIndex].movement+vec2(-1,0))*iCells[leftIndex].mass * leftCondition
-                             + iCells[index].movement*iCells[index].mass * indexCondition
-                             + (iCells[rightIndex].movement+vec2(1,0))*iCells[rightIndex].mass * rightCondition
-                             + (iCells[downLeftIndex].movement+vec2(-1,-1))*iCells[downLeftIndex].mass * downLeftCondition
-                             + (iCells[downIndex].movement+vec2(0,-1))*iCells[downIndex].mass * downCondition
-                             + (iCells[downRightIndex].movement+vec2(1, -1))*iCells[downRightIndex].mass * downRightCondition
-                             )/(mass+massNull)+velocity*0.01;
-
-    oCells[index].velocity = velocity;
-    oCells[index].mass = mass;
-
-    oCells[index].repulse = iCells[index].repulse;
-    oCells[index].state2 = iCells[index].state2;
-    //oCells[index].mass = iCells[index].mass + 0.5;
+    oCells[index].temperature
 }

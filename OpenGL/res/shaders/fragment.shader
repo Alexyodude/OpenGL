@@ -3,16 +3,9 @@
 out vec4 FragColor;
 
 struct Cell {
-    vec2 velocity;
-    vec2 movement;
-    float mass;
-    float repulse;
-    float state2;
-    float test1;
-    //float test2;
-    //float test3;
-    //float test4;
-    //vec2 test;
+    float temperature;
+    float alpha;
+    float source;
 };
 
 layout(std430, binding = 0) buffer InputCells {
@@ -27,16 +20,18 @@ const int gridWidth = 1000;
 const int gridHeight = 1000;
 
 void main() {
-    ivec2 coords = ivec2(gl_FragCoord.xy/4);
+    ivec2 coords = ivec2(gl_FragCoord.xy);
     int index = coords.y * gridWidth + coords.x;
 
     //oMass[index] = iMass[index]; // Update the mass]
 
     // Map the state to color: Assuming o2 is in the range [0, 1]
-    float alpha = oCells[index].mass;
-    float color2 = oCells[index].state2;
-    float color3 = oCells[index].repulse;
+    float r = oCells[index].temperature/100;
+    float g = oCells[index].temperature/200;
+    float b = oCells[index].temperature/300;
+    float a = oCells[index].temperature/300;
     //float colorNorm = (color1 + color2);
-    FragColor = vec4(color2*0.2, 0, color3*0.2, alpha); // Output as grayscale
+    FragColor = vec4(r, g, b, a); // Output as grayscale
+    // FragColor = vec4(coords.x/800.0, coords.y/800.0, 0.0, 1.0); Output as grayscale)
     //FragColor = vec4(iMass[index], i2[index], 0.0, 1.0);
 }
