@@ -72,10 +72,17 @@ Download them from the run's **Artifacts** section on the Actions tab.
 
 ## Portability changes
 
-Three changes were needed to make non-Windows builds behave like the Windows
+Four changes were needed to make non-Windows builds behave like the Windows
 one. The simulation itself — the wave diffusion, the attraction/repulsion
 gradient, momentum transfer, toroidal wrapping, the WASD dipole injection — is
 untouched.
+
+**`src/Log.h`: portable debug break.** `ASSERT` was defined as
+`if (!(x)) __debugbreak();`, and `__debugbreak()` is an MSVC intrinsic that does
+not exist on clang or gcc. Since `GLCall` wraps every GL call in `ASSERT`, this
+failed to compile at every call site on macOS and Linux. MSVC keeps the original
+intrinsic, so its behaviour is unchanged; clang uses `__builtin_debugtrap()` and
+gcc raises `SIGTRAP`.
 
 **`src/Platform.h` (new): deterministic RNG.** The 500x500 grid is seeded from
 `rand()` and `srand()` is never called, so the starting world is whatever the C
