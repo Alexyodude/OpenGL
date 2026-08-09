@@ -8,6 +8,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <memory> // std::unique_ptr - MSVC's STL pulls this in transitively, libstdc++ does not
 
 #include "Log.h"
 #include "Renderer.h"

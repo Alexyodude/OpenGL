@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory> // std::unique_ptr - MSVC's STL pulls this in transitively, libstdc++ does not
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

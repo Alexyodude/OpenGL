@@ -70,12 +70,32 @@ Output: `build/OpenGL`.
 
 Download them from the run's **Artifacts** section on the Actions tab.
 
+## Catching MSVC-isms without a Mac or Linux box
+
+Most cross-platform breakage here is MSVC accepting non-standard code. You can
+catch it from Windows with a conforming compiler in WSL, using only the headers
+vendored in this repo — no dev packages and no linking:
+
+```bash
+cd OpenGL
+INC="-Isrc -Isrc/vendor -IDependices/GLFW/include -IDependices/glew-2.1.0/include"
+for f in src/*.cpp src/tests/*.cpp; do
+    g++ -fsyntax-only -std=c++17 -DGLEW_STATIC -DGLEW_NO_GLU $INC "$f" || echo "FAILED: $f"
+done
+```
+
+This found every remaining portability bug in one pass after CI had been
+surfacing them one build at a time.
+
 ## Portability changes
 
-Four changes were needed to make non-Windows builds behave like the Windows
+Six changes were needed to make non-Windows builds behave like the Windows
 one. The simulation itself — the wave diffusion, the attraction/repulsion
 gradient, momentum transfer, toroidal wrapping, the WASD dipole injection — is
 untouched.
+
+The project had been compiled only by MSVC, which accepts several non-standard
+constructs that clang and gcc reject. Three of the six are that category.
 
 **`src/Log.h`: portable debug break.** `ASSERT` was defined as
 `if (!(x)) __debugbreak();`, and `__debugbreak()` is an MSVC intrinsic that does
@@ -83,6 +103,23 @@ not exist on clang or gcc. Since `GLCall` wraps every GL call in `ASSERT`, this
 failed to compile at every call site on macOS and Linux. MSVC keeps the original
 intrinsic, so its behaviour is unchanged; clang uses `__builtin_debugtrap()` and
 gcc raises `SIGTRAP`.
+
+**`src/VertexBufferLayout.h`: specialisations moved to namespace scope.** The
+three `Push<T>` specialisations were defined inside the class body. MSVC allows
+that as an extension; standard C++ requires explicit specialisations at
+namespace scope, and gcc rejects it with "explicit specialization in
+non-namespace scope". They are now defined after the class and marked `inline`,
+since the header is included from several translation units. The primary
+template's body was `std::runtime_error(false);`, which constructed and
+discarded a temporary rather than throwing, and only compiled because MSVC
+tolerates `false` as a `const char*`; it is now a `static_assert`. That branch
+is never instantiated — only `float`, `unsigned int` and `unsigned char` are
+used — so nothing observable changes.
+
+**`src/SandBox.h`, `src/Layer.h`, `src/Source.cpp`: added `#include <memory>`.**
+All three use `std::unique_ptr` without including `<memory>`. MSVC's standard
+library happens to pull it in transitively through other headers; libstdc++ does
+not, so every `unique_ptr` member was an undeclared type on Linux.
 
 **`src/Platform.h` (new): deterministic RNG.** The 500x500 grid is seeded from
 `rand()` and `srand()` is never called, so the starting world is whatever the C

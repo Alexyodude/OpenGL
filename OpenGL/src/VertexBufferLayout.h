@@ -36,34 +36,44 @@ public:
 	VertexBufferLayout() // constructor
 		: m_Stride(0) {} // initialize stride to 0
 
+	// Primary template. Only the three specialisations below are supported;
+	// instantiating any other type is a compile error. Previously the body was
+	// 'std::runtime_error(false);', which constructed and discarded a temporary
+	// rather than throwing, and only compiled on MSVC because clang and gcc
+	// correctly reject 'false' as a const char*.
 	template<typename T>
 	void Push(unsigned int count) // push
 	{
-		std::runtime_error(false);
-	}
-
-	template<>
-	void Push<float>(unsigned int count) // push float
-	{
-		m_Elements.push_back({ GL_FLOAT, count, GL_FALSE }); // push back element
-		m_Stride += count * VertexBufferElement::GetSizeOfType(GL_FLOAT); // increment stride
-	}
-
-	template<>
-	void Push<unsigned int>(unsigned int count) // push unsigned int
-	{
-		m_Elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE }); // push back element
-		m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT); // increment stride
-	}
-
-	template<>
-	void Push<unsigned char>(unsigned int count) // push unsigned char
-	{
-		m_Elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE }); // push back element
-		m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE); // increment stride
+		static_assert(sizeof(T) == 0, "VertexBufferLayout::Push: unsupported type");
 	}
 
 	inline const std::vector<VertexBufferElement> GetElements() const { return m_Elements; } // get elements
 	inline unsigned int GetStride() const { return m_Stride; } // get stride
 };
+
+// Explicit specialisations have to live at namespace scope. MSVC accepts them
+// inside the class body as an extension; clang and gcc reject it with
+// "explicit specialization in non-namespace scope". They need 'inline' because
+// this header is included from several translation units.
+
+template<>
+inline void VertexBufferLayout::Push<float>(unsigned int count) // push float
+{
+	m_Elements.push_back({ GL_FLOAT, count, GL_FALSE }); // push back element
+	m_Stride += count * VertexBufferElement::GetSizeOfType(GL_FLOAT); // increment stride
+}
+
+template<>
+inline void VertexBufferLayout::Push<unsigned int>(unsigned int count) // push unsigned int
+{
+	m_Elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE }); // push back element
+	m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT); // increment stride
+}
+
+template<>
+inline void VertexBufferLayout::Push<unsigned char>(unsigned int count) // push unsigned char
+{
+	m_Elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE }); // push back element
+	m_Stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE); // increment stride
+}
 
