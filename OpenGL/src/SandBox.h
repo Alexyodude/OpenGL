@@ -104,7 +104,12 @@ public:
 	//unsigned int index[12] = {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4};
 	std::vector<unsigned int> index;// = { {0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4} };
 
-	int vertexCount;
+	// Was uninitialised. It seeds every index value in AddQuad, so its garbage
+	// value decides whether the grid renders at all. The MSBuild/Windows build
+	// happened to start it at 0, which is why that build worked; other
+	// toolchains start it at garbage and render nothing. Pinned to 0 to lock in
+	// the behaviour the working build already had.
+	int vertexCount = 0;
 
 private:
 	std::unique_ptr<VertexArray> m_VAO;

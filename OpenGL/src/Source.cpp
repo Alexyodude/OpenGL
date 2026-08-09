@@ -29,6 +29,8 @@
 
 #include "EventListener.h"
 
+#include "Platform.h"
+
 int main(void)
 {
     GLFWwindow* window;
@@ -36,6 +38,9 @@ int main(void)
     /* Initialize the library */
     if (!glfwInit())
         return -1;
+
+    /* macOS needs a forward-compatible core profile requested up front; no-op elsewhere */
+    Platform::ApplyGLWindowHints();
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(Window_Width, Window_Height, "Hello Wurld", NULL, NULL);
@@ -48,7 +53,7 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
-    if (glewInit() != GLEW_OK) {
+    if (!Platform::InitGLLoader()) {
         std::cout << "Error!" << std::endl;
     }
     glfwSwapInterval(1);

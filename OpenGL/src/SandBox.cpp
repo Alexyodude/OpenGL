@@ -5,6 +5,7 @@
 
 #include "SandBox.h"
 #include "ShaderSource.h" // This is where the shader source code is stored
+#include "Platform.h"     // Deterministic rand() so every platform seeds the same world
 
 
 SandBox::SandBox()
@@ -32,7 +33,7 @@ SandBox::SandBox()
 	*/
 	for (int i = 0; i < gridLengthBackend; i++) {
 		for (int j = 0; j < gridLengthBackend; j++) {
-			float mass = std::rand() / (float)RAND_MAX-0.9;
+			float mass = Platform::Rand() / (float)PLATFORM_RAND_MAX-0.9;
 			if (i - 10 < (int)gridLengthBackend * 0.5 && j - 10 < (int)gridLengthBackend * 0.5
 				&& i + 10 > (int)gridLengthBackend * 0.5 && j + 10 > (int)gridLengthBackend * 0.5) {
 				if (i == (int)gridLengthBackend * 0.5 && j == (int)gridLengthBackend * 0.5) {
