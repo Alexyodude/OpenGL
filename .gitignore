@@ -374,3 +374,16 @@ CMakeUserPresets.json
 
 # ImGui writes this next to the working directory at exit.
 /imgui.ini
+
+# OMC runtime state, written per session into whichever directory the session
+# was started in. Only .omc/RULES.md is source-controlled.
+.omc/state/
+.omc/sessions/
+.omc/logs/
+.omc/research/
+.omc/plans/
+.omc/notepad.md
+.omc/project-memory.json
+
+# gstack writes here when its skills run.
+.gstack/
