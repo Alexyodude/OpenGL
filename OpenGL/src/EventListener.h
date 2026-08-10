@@ -5,6 +5,8 @@
 #include "Renderer.h"
 #include "GLFW/glfw3.h"
 
+#include "DebugConsole.h"
+
 bool KEY[128];
 
 void Cursor_Pos_Callback(GLFWwindow* window, double xpos, double ypos)
@@ -72,6 +74,12 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			KEY[key] = false;
 		}
 	}
+
+    // Backtick toggles the debug console, matching GameEng's binding.
+    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_PRESS) {
+        ::Debug::Console::Toggle();
+        return;
+    }
 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GLFW_TRUE);

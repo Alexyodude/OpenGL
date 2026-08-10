@@ -1,0 +1,42 @@
+# Exercises the SandBox debug surface end to end.
+#
+#   OpenGL.exe --cli-stdin < debug/scripts/sandbox.txt
+#
+# Lines starting with # are ignored. EOF on stdin enqueues `quit`, so the app
+# exits on its own once the script is consumed.
+
+help
+
+# Read side: what is registered, and what the sim currently looks like.
+get
+dump
+dump sandbox
+
+# Write side: every tunable should round-trip through set/get.
+get well
+set well 40
+get well
+
+set repulse 3.5
+get repulse
+
+set mDispersion 2.5
+get mDispersion
+
+set dispersion 0.11
+get dispersion
+
+# Error paths should report rather than crash.
+set nosuchvar 1
+get nosuchvar
+dump nosuchsystem
+
+# Confirm the writes landed in the simulation's own state.
+dump sandbox
+
+# Instrumentation primitives.
+dump watches
+dump counters
+dump timers
+
+quit

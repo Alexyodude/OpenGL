@@ -365,3 +365,12 @@ FodyWeavers.xsd
 /build/
 /build-*/
 CMakeUserPresets.json
+
+# The [Dd]ebug/ rule near the top targets Visual Studio build output, but it also
+# swallows the repo-root debug/ directory, which holds source-controlled console
+# scripts. Re-include it explicitly. (Same trap as glew's lib/Release/x64 being
+# eaten by the x64/ rule.)
+!/debug/
+
+# ImGui writes this next to the working directory at exit.
+/imgui.ini

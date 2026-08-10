@@ -89,6 +89,9 @@ public:
 	void SetTranslation(glm::vec3 m_Translate);
 	void FollowPlayer();
 
+	// Exposes the tunables via `set`/`get` and registers `dump sandbox`.
+	void RegisterDebug();
+
 	void PlayerMovementW();
 	void PlayerMovementA();
 	void PlayerMovementS();

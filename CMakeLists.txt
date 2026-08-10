@@ -32,6 +32,9 @@ set(SOURCES
     ${SRC_DIR}/IndexBuffer.cpp
     ${SRC_DIR}/VertexBuffer.cpp
     ${SRC_DIR}/VertexArray.cpp
+    ${SRC_DIR}/Debug.cpp
+    ${SRC_DIR}/DebugConsole.cpp
+    ${SRC_DIR}/DebugCli.cpp
     ${SRC_DIR}/tests/Test.cpp
     ${SRC_DIR}/tests/TestClearColor.cpp
     ${SRC_DIR}/vendor/glm/detail/glm.cpp
@@ -52,6 +55,18 @@ target_include_directories(OpenGL PRIVATE
     ${SRC_DIR}
     ${SRC_DIR}/vendor
 )
+
+# Three-layer debug surface: instrumentation macros, in-app console, --cli-stdin.
+# OFF by default so release builds compile every macro to a no-op and the
+# simulation behaves exactly as it did before any of this was added.
+option(DEBUG_BUILD "Enable the debug surface (Debug.h macros, console, --cli-stdin)" OFF)
+if(DEBUG_BUILD)
+    target_compile_definitions(OpenGL PRIVATE DEBUG_BUILD=1)
+endif()
+
+# DebugCli reads stdin on its own thread; libstdc++ needs pthread linked explicitly.
+find_package(Threads REQUIRED)
+target_link_libraries(OpenGL PRIVATE Threads::Threads)
 
 find_package(OpenGL REQUIRED)
 

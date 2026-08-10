@@ -70,6 +70,49 @@ Output: `build/OpenGL`.
 
 Download them from the run's **Artifacts** section on the Actions tab.
 
+## Debug surface
+
+Ported from the GameEng pixel engine. Off by default; build with
+`-DDEBUG_BUILD=ON` to enable it. In release every macro compiles to a no-op, the
+console cannot be opened, and `--cli-stdin` is refused with a warning, so the
+simulation behaves exactly as it did before any of this existed.
+
+Three layers, sharing one command registry:
+
+1. **Instrumentation** (`src/Debug.h`) — `DEBUG_LOG`, `DEBUG_ASSERT`,
+   `DEBUG_COUNTER`, `DEBUG_TIMER`, `DEBUG_WATCH`, plus the `set`/`get` variable
+   registry and the `dump` registry.
+2. **In-app console** (`src/DebugConsole.h`) — backtick (`` ` ``) toggles an
+   ImGui window across the bottom 40%. Up/Down for history, Tab to complete
+   command names. WASD stops steering the sim while it has focus.
+3. **External CLI** (`src/DebugCli.h`) — `--cli-stdin` reads the same commands
+   from stdin on a background thread, drained once per frame.
+
+| Command | Description |
+|---|---|
+| `help` | list commands |
+| `get [<key>]` | list variables, or read one |
+| `set <key> <value>` | write a variable live |
+| `dump [<system>]` | list dumpers, or run one |
+| `run <scriptfile>` | execute a script |
+| `console [on\|off\|toggle]` | control the overlay |
+| `clear` | clear the log |
+| `quit` | exit |
+
+Registered dumpers: `sandbox`, `counters`, `timers`, `watches`, `log`.
+Registered variables: `well`, `mDispersion`, `repulse`, `dispersion`,
+`intensity`, `accelDamp`.
+
+Scripted run:
+
+```
+cmake -S . -B build-dbg -A x64 -DDEBUG_BUILD=ON
+cmake --build build-dbg --config Release
+build-dbg\Release\OpenGL.exe --cli-stdin < debug\scripts\sandbox.txt
+```
+
+EOF on stdin enqueues `quit`, so the app exits when the script is consumed.
+
 ## Catching MSVC-isms without a Mac or Linux box
 
 Most cross-platform breakage here is MSVC accepting non-standard code. You can

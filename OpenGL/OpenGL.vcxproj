@@ -142,6 +142,9 @@
     <ClCompile Include="src\Layer.cpp" />
     <ClCompile Include="src\SandBox.cpp" />
     <ClCompile Include="src\Log.cpp" />
+    <ClCompile Include="src\Debug.cpp" />
+    <ClCompile Include="src\DebugConsole.cpp" />
+    <ClCompile Include="src\DebugCli.cpp" />
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -322,6 +325,9 @@
     <ClInclude Include="src\Layer.h" />
     <ClInclude Include="src\SandBox.h" />
     <ClInclude Include="src\Log.h" />
+    <ClInclude Include="src\Debug.h" />
+    <ClInclude Include="src\DebugConsole.h" />
+    <ClInclude Include="src\DebugCli.h" />
     <ClInclude Include="src\IndexBuffer.h" />
     <ClInclude Include="src\Player.h" />
     <ClInclude Include="src\Renderer.h" />

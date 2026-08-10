@@ -32,9 +32,30 @@
 
 #include "Platform.h"
 
-int main(void)
+#include "Debug.h"
+#include "DebugConsole.h"
+#include "DebugCli.h"
+#include <cstring>
+
+int main(int argc, char* argv[])
 {
     GLFWwindow* window;
+
+    bool cli_stdin = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--cli-stdin") == 0) cli_stdin = true;
+    }
+
+    ::Debug::Console::Init();
+    if (cli_stdin) {
+#ifdef DEBUG_BUILD
+        ::Debug::Cli::StartStdin();
+        DEBUG_LOG("CLI", "--cli-stdin enabled");
+#else
+        // Release accepts the flag but does nothing: warn rather than crash.
+        ::Debug::Log("CLI", "warning: --cli-stdin ignored in release build");
+#endif
+    }
 
     /* Initialize the library */
     if (!glfwInit())
@@ -113,7 +134,17 @@ int main(void)
             //sandBox->SetRenderer(&renderer);
             //sandBox->AddQuad(10+sandBox->index1.size(), 10, 2);
             layer->OnRender();
-            layer->OnEvent(KEY);
+            // Don't steer the sim with WASD while typing into the console.
+            // IsActive() is always false in release, so behaviour is unchanged there.
+            if (!::Debug::Console::IsActive()) layer->OnEvent(KEY);
+
+            // Drain any commands arriving over --cli-stdin, then draw the console
+            // overlay. Both are no-ops unless enabled.
+            ::Debug::Cli::Pump();
+            #ifdef ImGui_DEBUG
+                ::Debug::Console::Render();
+            #endif
+            if (::Debug::Console::QuitRequested()) glfwSetWindowShouldClose(window, GLFW_TRUE);
 
             #ifdef ImGui_DEBUG_TestTexture
                 if (currentTest) 
@@ -156,6 +187,7 @@ int main(void)
         ImGui::DestroyContext();
     #endif
 
+    ::Debug::Cli::Stop();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

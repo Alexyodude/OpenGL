@@ -6,6 +6,9 @@
 #include "SandBox.h"
 #include "ShaderSource.h" // This is where the shader source code is stored
 #include "Platform.h"     // Deterministic rand() so every platform seeds the same world
+#include "Debug.h"
+#include "DebugConsole.h"
+#include <sstream>
 
 
 SandBox::SandBox()
@@ -58,6 +61,11 @@ SandBox::SandBox()
 			SandBox::AddQuad((i - gridLength * 0.5) * (sideLength + gap) + Window_Width * 0.5, (j - gridLength * 0.5) * (sideLength + gap) + Window_Height * 0.5, verticesBackend[m_Player[0] - (gridLength-1) * 0.5 + i + m_Player[1] + (j - (gridLength - 1) * 0.5) * gridLengthBackend].m_Color);
 		}
 	}
+
+	RegisterDebug();
+	DEBUG_LOG("SIM", "SandBox init: backend %dx%d (%zu cells), view %dx%d (%zu quads)",
+		gridLengthBackend, gridLengthBackend, verticesBackend.size(),
+		gridLength, gridLength, index.size() / 6);
 }
 
 SandBox::~SandBox()
@@ -785,6 +793,44 @@ void SandBox::SetRenderer(Renderer* m_Renderer) {
 
 void SandBox::SetTranslation(glm::vec3 m_Translate) {
 	m_Translation += m_Translate;
+}
+
+void SandBox::RegisterDebug() {
+	// Every tunable that OnImGuiRender exposes as a slider, plus the two it
+	// does not, so a script can reach them without a rebuild.
+	Debug::RegisterVar("well",        &well);
+	Debug::RegisterVar("mDispersion", &mDispersion);
+	Debug::RegisterVar("repulse",     &repulse);
+	Debug::RegisterVar("dispersion",  &dispersion);
+	Debug::RegisterVar("intensity",   &intensity);
+	Debug::RegisterVar("accelDamp",   &accelDamp);
+
+	DEBUG_WATCH("well",    &well);
+	DEBUG_WATCH("repulse", &repulse);
+
+	Debug::RegisterDumper("sandbox", [this]() {
+		std::ostringstream os;
+		const int px = (int)m_Player[0];
+		const int py = (int)(m_Player[1] / (float)gridLengthBackend);
+		const size_t idx = (size_t)(m_Player[0] + m_Player[1]);
+		os << "grid        backend " << gridLengthBackend << "x" << gridLengthBackend
+		   << " (" << verticesBackend.size() << " cells), view "
+		   << gridLength << "x" << gridLength << "\n";
+		os << "quads       " << (index.size() / 6) << " (" << vertices.size() << " verts, "
+		   << index.size() << " indices, vertexCount=" << vertexCount << ")\n";
+		os << "player      cell (" << px << "," << py << ")  flat=" << idx << "\n";
+		if (idx < verticesBackend.size()) {
+			const auto& p = verticesBackend[idx];
+			os << "  mass=" << p.m_Mass << " wave=" << p.m_Wave
+			   << " vel=(" << p.m_Velocity[0] << "," << p.m_Velocity[1] << ")"
+			   << " countVel=(" << p.m_CountVelocity[0] << "," << p.m_CountVelocity[1] << ")\n";
+		}
+		os << "tunables    well=" << well << " mDispersion=" << mDispersion
+		   << " repulse=" << repulse << " dispersion=" << dispersion
+		   << " intensity=" << intensity << " accelDamp=" << accelDamp << "\n";
+		os << "translation (" << m_Translation.x << "," << m_Translation.y << ")";
+		return os.str();
+	});
 }
 
 void SandBox::FollowPlayer() {
