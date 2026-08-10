@@ -4,24 +4,59 @@
 
 This repository tracks the evolution of an OpenGL project from a basic 2D textured-quad renderer into increasingly sophisticated GPU-based simulations. The branches represent distinct experiments, each building on shared foundations but diverging in purpose and complexity.
 
+## How to read this document
+
+Revised 2026-08-10 after checking its claims against the repository. The pattern
+in what needed correcting is worth knowing before trusting any single line here:
+
+- Claims that came from **reading a file** held up. The truncated `compute2`
+  statement and the 625-thread workgroups were both real.
+- Claims that came from **inferring structure** did not. The branch topology was
+  wrong, and the workgroup recommendation would have silently broken the
+  simulation.
+
+Corrections are marked inline rather than quietly rewritten, so the difference
+between what was verified and what was assumed stays visible. Anything asserting
+a build or runtime outcome below has been reproduced; where it hasn't, it says
+so.
+
 ---
 
 ## Branch Map
 
+Verified with `git merge-base` and `git rev-list --left-right --count`.
+
 ```
-master (0bcbe54)
-├── branch-practice ─── gravity, WASD player, edge wrapping (CPU-based)
+master (0bcbe54, 2023-05-30)  ≡  Yay        ancestor of every branch
 │
-├── Two-Texture-Method-4x4-Pixel-Structure ─── Conway's Game of Life (GPU compute + fragment)
-│   │
-│   ├── Working-Two-Memory-Buffer-Method ─── velocity-based mass flow (dual compute shaders)
-│   │   │
-│   │   ├── Changing-Attraction-Mechanic-to-Directional ─── gravity matrix directional attraction
-│   │   │
-│   │   └── Heat ─── heat diffusion PDE solver
+├── branch-practice (2023-12-21)      +4     CPU mass/wave sim, WASD player, toroidal wrap
+│   └── cross-platform-build          +9     CMake, CI, portability fixes, debug surface
 │
-└── Yay ─── (identical to master)
+├── Two-Texture-Method-4x4 (2024-08-17) +2   Conway's Game of Life (GPU compute + fragment)
+│   └── 5e0cf83 "optimizing" (2024-08-27)
+│       ├── Working-Two-Memory-Buffer    +1  velocity-based mass flow (dual compute shaders)
+│       ├── Changing-Attraction-to-Directional +1  gravity matrix directional attraction
+│       └── Heat (2025-03-24)            +1  heat diffusion PDE solver
+│
+└── Claude (2026-04-08)               +1     this document
 ```
+
+**Correction.** An earlier revision of this document drew the three GPU branches
+as a chain, with `Working-Two-Memory-Buffer` as the parent of
+`Changing-Attraction` and `Heat`. That is wrong. All three share the merge base
+`5e0cf83` and are exactly **one commit** past it — they are siblings, not a
+lineage. `Working-Two-Memory-Buffer` is not an ancestor of either other branch.
+
+Two further facts that revision missed:
+
+- `Yay` is byte-identical to `master`: 0 ahead, 0 behind. It carries no work.
+- **No branch is behind master**, because master has not moved since
+  2023-05-30. Every experiment forked from a trunk that then stopped advancing,
+  which is why shader loading and window setup are duplicated across branches
+  rather than shared.
+
+Because the three GPU branches are one commit apart from a common base, they are
+far cheaper to reconcile than a chain would be.
 
 ---
 
@@ -187,8 +222,37 @@ master (0bcbe54)
 - The 4-neighbor stencil (no diagonals) is standard for the 2D Laplacian
 - **Stability concern:** The explicit scheme requires `alpha < 0.25` for stability in 2D (CFL condition). With the given parameters: alpha = 45 * 1e-8 / 1e-4 = 0.0045, which satisfies the condition. Good
 - The tiny timestep (1e-8) means the simulation will evolve very slowly per frame. Consider increasing dt while staying below the CFL limit, or switching to an implicit scheme for larger timesteps
-- compute2.shader appears incomplete (code terminates mid-line) - this needs to be finished
 - Using only 4 neighbors (not 8) is correct for the standard 5-point Laplacian stencil
+
+**compute2.shader — corrected, and fixed in `8cbe7d8`.** An earlier revision
+described this as "incomplete" and implied the branch was broken. It is not.
+`_compute2` is commented out at line 1 of `Source.cpp`, and the `#ifdef` guards
+wrap both the shader's construction and its dispatch, so the file was never
+compiled and never ran. **Heat works**; it runs pass 1 alone, which is a
+complete explicit finite-difference step.
+
+The file had *two* independent compile blockers, not one:
+
+1. The final statement was truncated: `oCells[index].temperature` with no
+   assignment or semicolon.
+2. Its `Cell` struct disagreed with `compute.shader`'s — it misspelled
+   `temperature` as `tempature` and omitted `source`, giving an 8-byte stride
+   against pass 1's 12-byte layout over the same SSBOs. The GL compiler reports
+   this one *first*, so the truncation was never even reached.
+
+The dispatch also hardcoded `ssbos[1]`/`ssbos[0]`, ignoring `currentSSBOIndex`,
+so enabling the define would have read the wrong buffer on alternate frames.
+
+All three are fixed. The shader now mirrors `compute.shader` exactly, because
+nothing records what a distinct second pass was intended to do. `_compute2`
+remains commented out, so runtime behaviour is unchanged.
+
+**Separate finding: alpha and source never propagate.** `compute.shader` writes
+only `oCells[index].temperature`. `grid2` is value-initialised to zeros and
+uploaded to `ssbos[1]`, so on frames that read `ssbos[1]` every cell has
+`alpha = 0` and `source = 0`, and the update degenerates to
+`temp = temp + 0 - 0 + 0`. The simulation therefore advances on roughly half its
+frames. Not fixed here, since correcting it changes simulation behaviour.
 
 **Verdict: Valid implementation of explicit finite difference heat equation. Numerically stable with chosen parameters. The incomplete compute2.shader needs attention.**
 
@@ -212,11 +276,37 @@ master (0bcbe54)
 
 2. **Memory efficiency:** The Directional branch's mat4 for a 3x3 field wastes GPU memory. Profile and optimize cell structures.
 
-3. **Workgroup sizing:** The 25x25 (625 thread) workgroups may not be optimal for all GPUs. Most GPUs prefer workgroup sizes that are multiples of the warp/wavefront size (32 for NVIDIA, 64 for AMD). Consider 16x16 or 32x32.
+3. **Workgroup sizing — do not apply this naively.** The 25x25 (625 thread)
+   workgroups are not a multiple of the warp/wavefront size (32 NVIDIA, 64 AMD),
+   so 16x16 or 32x32 would occupy better. But **25 was almost certainly chosen
+   because it divides the grid exactly**: the grid is 1000x1000 and the dispatch
+   is `glDispatchCompute(gridWidth / 25, gridHeight / 25, 1)` — 40 groups × 25 =
+   1000, full coverage.
 
-4. **Heat branch incomplete:** The compute2.shader is cut off mid-line and needs to be completed.
+   Switching to 16 without touching anything else gives `1000 / 16 = 62` by
+   integer division, so 62 × 16 = 992: **the last 8 columns and 8 rows are never
+   simulated**. On a toroidal grid that also corrupts wrapping, and it fails
+   silently — the sim keeps running and simply stops updating a band at two
+   edges.
 
-5. **No shared utilities:** Each simulation branch reinvents buffer setup, shader loading, and the render loop. A thin shared utility layer (just for SSBO creation, compute dispatch, and fullscreen quad rendering) would reduce duplication without over-abstracting.
+   A safe change needs all three parts: the new local size, ceil-division
+   dispatch (`(gridWidth + N - 1) / N`), and an in-shader bounds guard
+   (`if (coords.x >= gridWidth || coords.y >= gridHeight) return;`) so the
+   overhang threads do nothing. Two-Texture already uses 16x16 and should be
+   checked for exactly this bug.
+
+4. ~~**Heat branch incomplete:** The compute2.shader is cut off mid-line and
+   needs to be completed.~~ Superseded — see the corrected compute2 analysis in
+   the Heat section. Fixed in `8cbe7d8`.
+
+5. **Absolute path in the Heat vcxproj.** It listed
+   `D:\VS\OpenGL\OpenGL\Dependices\Imgui` as an include directory, a drive that
+   exists only on the original machine, so the branch could not build anywhere
+   else — it failed with `C1083: Cannot open include file: 'imgui.h'`. ImGui is
+   vendored at `OpenGL/Dependices/Imgui`; switched to `$(SolutionDir)` in
+   `8cbe7d8`. Worth auditing the other branches for the same pattern.
+
+6. **No shared utilities:** Each simulation branch reinvents buffer setup, shader loading, and the render loop. A thin shared utility layer (just for SSBO creation, compute dispatch, and fullscreen quad rendering) would reduce duplication without over-abstracting.
 
 ### Is the Approach Valid?
 
