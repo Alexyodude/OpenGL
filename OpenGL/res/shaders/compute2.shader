@@ -2,9 +2,25 @@
 
 layout(local_size_x = 25, local_size_y = 25) in;
 
+// Second compute pass. Still disabled: _compute2 is commented out at the top of
+// Source.cpp, so neither this shader nor its dispatch is built.
+//
+// It previously could not compile for two independent reasons: the final
+// statement was truncated ("oCells[index].temperature" with no assignment or
+// semicolon), and the Cell struct declared here disagreed with the one in
+// compute.shader - it misspelled temperature as "tempature" and omitted
+// "source", giving an 8-byte stride against pass 1's 12-byte layout over the
+// same SSBOs. Both are fixed below so that enabling _compute2 no longer fails
+// at shader compilation.
+//
+// The update is deliberately identical to compute.shader. What a distinct
+// second pass was intended to do is not recorded anywhere, so nothing new is
+// invented here.
+
 struct Cell {
-    float tempature;
+    float temperature;
     float alpha;
+    float source;
 };
 
 layout(std430, binding = 0) buffer InputCells {
@@ -39,10 +55,18 @@ void main() {
     int upIndex = up * gridWidth + coords.x;
     int downIndex = down * gridWidth + coords.x;
 
-    int upLeftIndex = up * gridWidth + left;
-    int upRightIndex = up * gridWidth + right;
-    int downLeftIndex = down * gridWidth + left;
-    int downRightIndex = down * gridWidth + right;
+    // Diagonals are unused by the 5-point Laplacian, same as compute.shader.
+    // int upLeftIndex = up * gridWidth + left;
+    // int upRightIndex = up * gridWidth + right;
+    // int downLeftIndex = down * gridWidth + left;
+    // int downRightIndex = down * gridWidth + right;
 
-    oCells[index].temperature
+    Cell leftCell = iCells[leftIndex];
+    Cell rightCell = iCells[rightIndex];
+    Cell upCell = iCells[upIndex];
+    Cell downCell = iCells[downIndex];
+
+    oCells[index].temperature = iCells[index].temperature
+    + iCells[index].alpha * (leftCell.temperature + rightCell.temperature + upCell.temperature + downCell.temperature)
+    - (leftCell.alpha + rightCell.alpha + upCell.alpha + downCell.alpha) * iCells[index].temperature + iCells[index].source;
 }

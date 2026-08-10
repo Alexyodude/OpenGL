@@ -146,9 +146,11 @@ int main() {
 #ifdef _compute2
         computeProgram2->Bind();
 
-        // You may need to adjust the buffer bindings depending on your data flow
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbos[1]);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbos[0]);
+        // Read what pass 1 just wrote and write back into the buffer it read
+        // from. These were hardcoded to ssbos[1] and ssbos[0], which ignored
+        // currentSSBOIndex and so read the wrong buffer on every other frame.
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbos[(currentSSBOIndex + 1) % 2]);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbos[currentSSBOIndex]);
 
         glDispatchCompute(gridWidth / 25, gridHeight / 25, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
