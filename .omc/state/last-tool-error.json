@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ls \\\"C:/Users/Alexyodude/Desktop/AlexFolder/OpenGL/RecursiveSim/Dependices/GLFW/lib-vc2022/\\\" 2>/dev/null && echo \\\"---\\\" && ls \\\"C:/Users/Alexyodude/Desktop/AlexFolder/OpenGL/RecursiveSim...",
+  "error": "Exit code 2\nglfw3.lib\n---",
+  "timestamp": "2026-04-08T09:11:11.461Z",
+  "retry_count": 1
+}

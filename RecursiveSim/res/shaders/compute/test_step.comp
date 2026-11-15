@@ -1,0 +1,64 @@
+#version 430 core
+
+// Conway's Game of Life compute shader.
+// Single pass, swap after.
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+struct TestCell {
+    float alive;
+    float age;
+    float padding0;
+    float padding1;
+};
+
+layout(std430, binding = 0) buffer InputCells {
+    TestCell iCells[];
+};
+
+layout(std430, binding = 1) buffer OutputCells {
+    TestCell oCells[];
+};
+
+uniform int u_GridWidth;
+uniform int u_GridHeight;
+
+int wrapIndex(int index, int maxIndex) {
+    return (index + maxIndex) % maxIndex;
+}
+
+void main() {
+    ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
+    if (coords.x >= u_GridWidth || coords.y >= u_GridHeight) return;
+
+    int index = coords.y * u_GridWidth + coords.x;
+
+    // Count live neighbors (8-connected, torus wrapping)
+    int liveNeighbors = 0;
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            if (dx == 0 && dy == 0) continue;
+            int nx = wrapIndex(coords.x + dx, u_GridWidth);
+            int ny = wrapIndex(coords.y + dy, u_GridHeight);
+            int ni = ny * u_GridWidth + nx;
+            if (iCells[ni].alive > 0.5) liveNeighbors++;
+        }
+    }
+
+    float wasAlive = iCells[index].alive;
+    float isAlive = 0.0;
+
+    // Conway's rules:
+    // Live cell with 2 or 3 neighbors survives
+    // Dead cell with exactly 3 neighbors becomes alive
+    if (wasAlive > 0.5) {
+        isAlive = (liveNeighbors == 2 || liveNeighbors == 3) ? 1.0 : 0.0;
+    } else {
+        isAlive = (liveNeighbors == 3) ? 1.0 : 0.0;
+    }
+
+    oCells[index].alive    = isAlive;
+    oCells[index].age      = (isAlive > 0.5) ? (iCells[index].age + 1.0) : 0.0;
+    oCells[index].padding0 = 0.0;
+    oCells[index].padding1 = 0.0;
+}

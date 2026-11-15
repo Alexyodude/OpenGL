@@ -1,0 +1,361 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775623137290,
+  "projectRoot": "C:\\Users\\Alexyodude\\Desktop\\AlexFolder\\OpenGL",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "OpenGL": {
+      "path": "OpenGL",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1775623137259,
+      "keyFiles": [
+        "imgui.ini",
+        "OpenGL.vcxproj",
+        "OpenGL.vcxproj.filters"
+      ]
+    },
+    "OpenGL\\src": {
+      "path": "OpenGL\\src",
+      "purpose": "Source code",
+      "fileCount": 23,
+      "lastAccessed": 1775623137260,
+      "keyFiles": [
+        "EventListener.h",
+        "IndexBuffer.cpp",
+        "IndexBuffer.h"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "",
+      "accessCount": 15,
+      "lastAccessed": 1775639409062,
+      "type": "directory"
+    },
+    {
+      "path": "RecursiveSim\\src\\main.cpp",
+      "accessCount": 14,
+      "lastAccessed": 1775641092671,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\BondLayer.cpp",
+      "accessCount": 10,
+      "lastAccessed": 1775638939417,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\LayerStack.h",
+      "accessCount": 7,
+      "lastAccessed": 1775640835208,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\ParticleLayer.cpp",
+      "accessCount": 6,
+      "lastAccessed": 1775638877905,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\SimLayer.h",
+      "accessCount": 6,
+      "lastAccessed": 1775641088251,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\ParticleLayer.h",
+      "accessCount": 5,
+      "lastAccessed": 1775638804154,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\HeatLayer.cpp",
+      "accessCount": 5,
+      "lastAccessed": 1775638875403,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\LayerRegistry.cpp",
+      "accessCount": 5,
+      "lastAccessed": 1775638896550,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\SSBOManager.h",
+      "accessCount": 5,
+      "lastAccessed": 1775638901416,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\LayerRegistry.h",
+      "accessCount": 4,
+      "lastAccessed": 1775638924349,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\SimLayer.cpp",
+      "accessCount": 4,
+      "lastAccessed": 1775641078814,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\res\\shaders\\fragment\\heat_vis.frag",
+      "accessCount": 4,
+      "lastAccessed": 1775641105660,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Layer.h",
+      "accessCount": 3,
+      "lastAccessed": 1775637595857,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Source.cpp",
+      "accessCount": 3,
+      "lastAccessed": 1775637597621,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\ShaderPass.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638523168,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\GridRenderer.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638538781,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Shader.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638552988,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\res\\shaders\\compute\\heat_step.comp",
+      "accessCount": 3,
+      "lastAccessed": 1775638697850,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\BondLayer.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638796274,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\ChemicalsLayer.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638796493,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\ChemicalsLayer.cpp",
+      "accessCount": 3,
+      "lastAccessed": 1775638803848,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\layers\\HeatLayer.h",
+      "accessCount": 3,
+      "lastAccessed": 1775638803881,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\SSBOManager.cpp",
+      "accessCount": 3,
+      "lastAccessed": 1775638903117,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Layer.cpp",
+      "accessCount": 2,
+      "lastAccessed": 1775637596156,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Shader.h",
+      "accessCount": 2,
+      "lastAccessed": 1775637596613,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\SandBox.h",
+      "accessCount": 2,
+      "lastAccessed": 1775637597902,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Log.h",
+      "accessCount": 2,
+      "lastAccessed": 1775638410257,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\res\\shaders\\compute\\particle_step1.comp",
+      "accessCount": 2,
+      "lastAccessed": 1775638698608,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\GridRenderer.cpp",
+      "accessCount": 2,
+      "lastAccessed": 1775641037914,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\res\\shaders\\common\\vertex.glsl",
+      "accessCount": 2,
+      "lastAccessed": 1775641039084,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\SandBox.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775623537451,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Renderer.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623539767,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Renderer.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775623540013,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Shader.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775623540497,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\VertexArray.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623543042,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\VertexBuffer.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623543492,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\IndexBuffer.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623543663,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Texture.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623543856,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\res\\shaders\\Basic.shader",
+      "accessCount": 1,
+      "lastAccessed": 1775623546386,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\VertexBufferLayout.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623546547,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\EventListener.h",
+      "accessCount": 1,
+      "lastAccessed": 1775623546686,
+      "type": "file"
+    },
+    {
+      "path": "BRANCH_ANALYSIS.md",
+      "accessCount": 1,
+      "lastAccessed": 1775624219651,
+      "type": "file"
+    },
+    {
+      "path": "OpenGL\\src\\Log.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775638410394,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Log.h",
+      "accessCount": 1,
+      "lastAccessed": 1775638428253,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Log.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775638430248,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Shader.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775638456760,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Application.h",
+      "accessCount": 1,
+      "lastAccessed": 1775638457999,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\core\\Application.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775638467234,
+      "type": "file"
+    },
+    {
+      "path": "RecursiveSim\\src\\framework\\LayerStack.cpp",
+      "accessCount": 1,
+      "lastAccessed": 1775638539406,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

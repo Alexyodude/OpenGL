@@ -1,0 +1,10 @@
+{
+  "active": false,
+  "current_phase": "approved",
+  "_meta": {
+    "mode": "ralplan",
+    "sessionId": "recursive-sim-consensus",
+    "updatedAt": "2026-04-08T08:47:23.059Z",
+    "updatedBy": "state_write_tool"
+  }
+}

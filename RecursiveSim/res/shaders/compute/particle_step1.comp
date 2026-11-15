@@ -1,0 +1,96 @@
+#version 430 core
+
+// Pass 1: velocity/state diffusion from neighbors.
+// Reads SSBO binding 0, writes SSBO binding 1. NO swap after.
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+struct ParticleCell {
+    vec2 velocity;
+    vec2 movement;
+    float mass;
+    float repulse;
+    float state2;
+    float extra;
+};
+
+layout(std430, binding = 0) buffer InputCells {
+    ParticleCell iCells[];
+};
+
+layout(std430, binding = 1) buffer OutputCells {
+    ParticleCell oCells[];
+};
+
+uniform int u_GridWidth;
+uniform int u_GridHeight;
+
+const float divide        = 0.12;
+const float divideRepulse = 0.07;
+
+int wrapIndex(int index, int maxIndex) {
+    return (index + maxIndex) % maxIndex;
+}
+
+void main() {
+    ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
+    if (coords.x >= u_GridWidth || coords.y >= u_GridHeight) return;
+
+    int index = coords.y * u_GridWidth + coords.x;
+
+    int left  = wrapIndex(coords.x - 1, u_GridWidth);
+    int right = wrapIndex(coords.x + 1, u_GridWidth);
+    int up    = wrapIndex(coords.y - 1, u_GridHeight);
+    int down  = wrapIndex(coords.y + 1, u_GridHeight);
+
+    int leftIndex      = coords.y * u_GridWidth + left;
+    int rightIndex     = coords.y * u_GridWidth + right;
+    int upIndex        = up   * u_GridWidth + coords.x;
+    int downIndex      = down * u_GridWidth + coords.x;
+    int upLeftIndex    = up   * u_GridWidth + left;
+    int upRightIndex   = up   * u_GridWidth + right;
+    int downLeftIndex  = down * u_GridWidth + left;
+    int downRightIndex = down * u_GridWidth + right;
+
+    ParticleCell center       = iCells[index];
+    ParticleCell leftCell     = iCells[leftIndex];
+    ParticleCell rightCell    = iCells[rightIndex];
+    ParticleCell upCell       = iCells[upIndex];
+    ParticleCell downCell     = iCells[downIndex];
+    ParticleCell upLeftCell   = iCells[upLeftIndex];
+    ParticleCell upRightCell  = iCells[upRightIndex];
+    ParticleCell downLeftCell = iCells[downLeftIndex];
+    ParticleCell downRightCell= iCells[downRightIndex];
+
+    float mass = center.mass;
+    vec2  velocity = center.velocity;
+
+    // Gradient-based velocity update from state2 and repulse fields
+    vec2 stateDiff   = vec2(rightCell.state2  - leftCell.state2,  upCell.state2  - downCell.state2);
+    vec2 repulseDiff = vec2(rightCell.repulse - leftCell.repulse, upCell.repulse - downCell.repulse);
+
+    vec2 diagonalStateRepulse = vec2(
+        (upRightCell.state2  - upLeftCell.state2  + downRightCell.state2  - downLeftCell.state2)  * 0.5,
+        (upLeftCell.repulse  - downRightCell.repulse + upRightCell.repulse - downLeftCell.repulse) * 0.5
+    );
+
+    // Only update velocity if cell has mass
+    float indexCondition = (1.0 - step(0.0, -mass));
+
+    oCells[index].velocity = (stateDiff - repulseDiff + diagonalStateRepulse + velocity) * indexCondition;
+
+    // Neighbourhood mass sums for state2 and repulse diffusion
+    float massSum = upLeftCell.state2   + upRightCell.state2   + downLeftCell.state2   + downRightCell.state2
+                  + upCell.state2       + downCell.state2       + leftCell.state2        + rightCell.state2;
+
+    float repulseSum = upLeftCell.repulse + upRightCell.repulse + downLeftCell.repulse + downRightCell.repulse
+                     + upCell.repulse     + downCell.repulse     + leftCell.repulse      + rightCell.repulse;
+
+    oCells[index].state2  = massSum   * divide        + mass;
+    oCells[index].repulse = repulseSum * divideRepulse + 2.0 * mass;
+
+    // Pass through unchanged
+    oCells[index].movement = center.movement;
+    oCells[index].mass     = mass;
+    oCells[index].extra    = center.extra;
+}

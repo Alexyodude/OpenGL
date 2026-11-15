@@ -1,0 +1,123 @@
+#version 430 core
+
+// Pass 2: directional mass transport based on movement vectors.
+// Reads SSBO binding 0 (which was written by pass1 as binding 1, then bound here as 0).
+// Writes SSBO binding 1 (which is the original SSBO[0]).
+// NO swap after.
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+struct ParticleCell {
+    vec2 velocity;
+    vec2 movement;
+    float mass;
+    float repulse;
+    float state2;
+    float extra;
+};
+
+layout(std430, binding = 0) buffer InputCells {
+    ParticleCell iCells[];
+};
+
+layout(std430, binding = 1) buffer OutputCells {
+    ParticleCell oCells[];
+};
+
+uniform int u_GridWidth;
+uniform int u_GridHeight;
+
+const float divide        = 0.11;
+const float divideRepulse = 0.07;
+
+int wrapIndex(int index, int maxIndex) {
+    return (index + maxIndex) % maxIndex;
+}
+
+void main() {
+    ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
+    if (coords.x >= u_GridWidth || coords.y >= u_GridHeight) return;
+
+    int index = coords.y * u_GridWidth + coords.x;
+
+    int left  = wrapIndex(coords.x - 1, u_GridWidth);
+    int right = wrapIndex(coords.x + 1, u_GridWidth);
+    int up    = wrapIndex(coords.y - 1, u_GridHeight);
+    int down  = wrapIndex(coords.y + 1, u_GridHeight);
+
+    int leftIndex      = coords.y * u_GridWidth + left;
+    int rightIndex     = coords.y * u_GridWidth + right;
+    int upIndex        = up   * u_GridWidth + coords.x;
+    int downIndex      = down * u_GridWidth + coords.x;
+    int upLeftIndex    = up   * u_GridWidth + left;
+    int upRightIndex   = up   * u_GridWidth + right;
+    int downLeftIndex  = down * u_GridWidth + left;
+    int downRightIndex = down * u_GridWidth + right;
+
+    // Movement-direction conditions: a neighbor contributes its mass
+    // to this cell if its movement vector points toward this cell.
+    float upLeftCondition    = step(1.0,  iCells[upLeftIndex].movement.x)   * step(1.0, -iCells[upLeftIndex].movement.y);
+    float upCondition        = (1.0 - step(1.0, iCells[upIndex].movement.x * iCells[upIndex].movement.x))
+                               * step(1.0, -iCells[upIndex].movement.y);
+    float upRightCondition   = step(1.0, -iCells[upRightIndex].movement.x)  * step(1.0, -iCells[upRightIndex].movement.y);
+    float leftCondition      = step(1.0,  iCells[leftIndex].movement.x)
+                               * (1.0 - step(1.0, iCells[leftIndex].movement.y * iCells[leftIndex].movement.y));
+    float rightCondition     = step(1.0, -iCells[rightIndex].movement.x)
+                               * (1.0 - step(1.0, iCells[rightIndex].movement.y * iCells[rightIndex].movement.y));
+    float downLeftCondition  = step(1.0,  iCells[downLeftIndex].movement.x)  * step(1.0,  iCells[downLeftIndex].movement.y);
+    float downCondition      = (1.0 - step(1.0, iCells[downIndex].movement.x * iCells[downIndex].movement.x))
+                               * step(1.0,  iCells[downIndex].movement.y);
+    float downRightCondition = step(1.0, -iCells[downRightIndex].movement.x) * step(1.0,  iCells[downRightIndex].movement.y);
+    // Center cell stays if its movement is within bounds (not moving away)
+    float indexCondition     = (1.0 - step(1.0, iCells[index].movement.x * iCells[index].movement.x))
+                             * (1.0 - step(1.0, iCells[index].movement.y * iCells[index].movement.y));
+
+    // Accumulate mass from contributing neighbors
+    float mass = iCells[upLeftIndex].mass    * upLeftCondition
+               + iCells[upIndex].mass        * upCondition
+               + iCells[upRightIndex].mass   * upRightCondition
+               + iCells[leftIndex].mass      * leftCondition
+               + iCells[index].mass          * indexCondition
+               + iCells[rightIndex].mass     * rightCondition
+               + iCells[downLeftIndex].mass  * downLeftCondition
+               + iCells[downIndex].mass      * downCondition
+               + iCells[downRightIndex].mass * downRightCondition;
+
+    // Guard against division by zero
+    float massState = step(0.0, -mass);
+    float massNull  = massState * 0.0001;
+
+    // Momentum-weighted velocity
+    vec2 velocity = (
+          iCells[upLeftIndex].velocity    * iCells[upLeftIndex].mass    * upLeftCondition
+        + iCells[upIndex].velocity        * iCells[upIndex].mass        * upCondition
+        + iCells[upRightIndex].velocity   * iCells[upRightIndex].mass   * upRightCondition
+        + iCells[leftIndex].velocity      * iCells[leftIndex].mass      * leftCondition
+        + iCells[index].velocity          * iCells[index].mass          * indexCondition
+        + iCells[rightIndex].velocity     * iCells[rightIndex].mass     * rightCondition
+        + iCells[downLeftIndex].velocity  * iCells[downLeftIndex].mass  * downLeftCondition
+        + iCells[downIndex].velocity      * iCells[downIndex].mass      * downCondition
+        + iCells[downRightIndex].velocity * iCells[downRightIndex].mass * downRightCondition
+    ) / (mass + massNull);
+
+    // Weighted movement update (relative offsets per neighbor direction)
+    oCells[index].movement = (
+          (iCells[upLeftIndex].movement    + vec2(-1.0,  1.0)) * iCells[upLeftIndex].mass    * upLeftCondition
+        + (iCells[upIndex].movement        + vec2( 0.0,  1.0)) * iCells[upIndex].mass        * upCondition
+        + (iCells[upRightIndex].movement   + vec2( 1.0,  1.0)) * iCells[upRightIndex].mass   * upRightCondition
+        + (iCells[leftIndex].movement      + vec2(-1.0,  0.0)) * iCells[leftIndex].mass      * leftCondition
+        +  iCells[index].movement                               * iCells[index].mass          * indexCondition
+        + (iCells[rightIndex].movement     + vec2( 1.0,  0.0)) * iCells[rightIndex].mass     * rightCondition
+        + (iCells[downLeftIndex].movement  + vec2(-1.0, -1.0)) * iCells[downLeftIndex].mass  * downLeftCondition
+        + (iCells[downIndex].movement      + vec2( 0.0, -1.0)) * iCells[downIndex].mass      * downCondition
+        + (iCells[downRightIndex].movement + vec2( 1.0, -1.0)) * iCells[downRightIndex].mass * downRightCondition
+    ) / (mass + massNull) + velocity * 0.01;
+
+    oCells[index].velocity = velocity;
+    oCells[index].mass     = mass;
+    oCells[index].repulse  = (iCells[index].repulse - 2.0 * iCells[index].mass) * (1.0 - indexCondition)
+                           + (iCells[index].repulse + 2.0 * (mass - iCells[index].mass)) * indexCondition;
+    oCells[index].state2   = (iCells[index].state2 - iCells[index].mass) * (1.0 - indexCondition)
+                           + (iCells[index].state2 + mass - iCells[index].mass) * indexCondition;
+    oCells[index].extra    = iCells[index].extra;
+}

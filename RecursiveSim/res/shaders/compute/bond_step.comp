@@ -1,0 +1,88 @@
+#version 430 core
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+struct BondCell {
+    vec2 displacement;
+    vec2 velocity;
+    float mass;
+    float stiffness;
+    float damping;
+    float broken;
+};
+
+layout(std430, binding = 0) buffer InputCells {
+    BondCell iCells[];
+};
+
+layout(std430, binding = 1) buffer OutputCells {
+    BondCell oCells[];
+};
+
+uniform int u_GridWidth;
+uniform int u_GridHeight;
+
+int wrapIndex(int coord, int maxCoord) {
+    return (coord + maxCoord) % maxCoord;
+}
+
+void main() {
+    ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
+    if (coords.x >= u_GridWidth || coords.y >= u_GridHeight) return;
+
+    int index = coords.y * u_GridWidth + coords.x;
+
+    BondCell self = iCells[index];
+
+    // Copy non-simulated fields through
+    oCells[index].mass      = self.mass;
+    oCells[index].stiffness = self.stiffness;
+    oCells[index].damping   = self.damping;
+    oCells[index].broken    = self.broken;
+
+    // Broken cells don't simulate -- freeze in place
+    if (self.broken > 0.5) {
+        oCells[index].displacement = self.displacement;
+        oCells[index].velocity     = self.velocity;
+        return;
+    }
+
+    // Neighbor indices with torus wrapping
+    int xL = wrapIndex(coords.x - 1, u_GridWidth);
+    int xR = wrapIndex(coords.x + 1, u_GridWidth);
+    int yU = wrapIndex(coords.y - 1, u_GridHeight);
+    int yD = wrapIndex(coords.y + 1, u_GridHeight);
+
+    int iLeft  = coords.y * u_GridWidth + xL;
+    int iRight = coords.y * u_GridWidth + xR;
+    int iUp    = yU * u_GridWidth + coords.x;
+    int iDown  = yD * u_GridWidth + coords.x;
+
+    BondCell nLeft  = iCells[iLeft];
+    BondCell nRight = iCells[iRight];
+    BondCell nUp    = iCells[iUp];
+    BondCell nDown  = iCells[iDown];
+
+    // Spring-mass model: F = -k * displacement - d * velocity + neighborForces
+    // neighborForces: sum of (neighbor.displacement - self.displacement) * neighbor.stiffness
+    // Broken neighbors contribute no force.
+    vec2 neighborForce = vec2(0.0);
+    if (nLeft.broken  < 0.5) neighborForce += nLeft.stiffness  * (nLeft.displacement  - self.displacement);
+    if (nRight.broken < 0.5) neighborForce += nRight.stiffness * (nRight.displacement - self.displacement);
+    if (nUp.broken    < 0.5) neighborForce += nUp.stiffness    * (nUp.displacement    - self.displacement);
+    if (nDown.broken  < 0.5) neighborForce += nDown.stiffness  * (nDown.displacement  - self.displacement);
+
+    vec2 restoreForce = -self.stiffness * self.displacement;
+    vec2 dampingForce = -self.damping   * self.velocity;
+    vec2 totalForce   = restoreForce + dampingForce + neighborForce;
+
+    float safeMass    = max(self.mass, 0.001);
+    vec2 acceleration = totalForce / safeMass;
+
+    float dt = 0.016;  // ~60 fps timestep
+    vec2 newVelocity     = self.velocity     + acceleration * dt;
+    vec2 newDisplacement = self.displacement + newVelocity  * dt;
+
+    oCells[index].velocity     = newVelocity;
+    oCells[index].displacement = newDisplacement;
+}
